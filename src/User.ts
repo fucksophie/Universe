@@ -21,6 +21,7 @@ export default class User extends EventEmitter {
   ranks?: Set<string>;
 
   token?: string;
+  vanished: boolean;
 
   static getToken(token: string) {
     return db.prepare(

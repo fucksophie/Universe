@@ -16,7 +16,7 @@ import { Logger } from "./Logger";
 import Channel, { ChannelConfiguration, getDefaultConfig } from "./Channel";
 import Client from "./Client";
 import User from "./User";
-import { ServerWebSocket } from "bun";
+import { gc, ServerWebSocket } from "bun";
 import { Antibot } from "./Antibot";
 import { heapStats, memoryUsage } from "bun:jsc";
 
@@ -182,12 +182,15 @@ export default class Server {
       Bun.gc(true);
       let gcEnd = heapStats().objectCount;
 
-      /*Server.logger.info([
+      Server.logger.info([
         "GC. Freed:",
         gcStart - gcEnd,
         "objects. Current object count:",
         gcEnd,
-      ]);*/
+      ]);
+
+      gcEnd = null;
+      gcStart = null;
     }, 15000);
   }
 

@@ -494,6 +494,11 @@ export default class Channel {
         banned: p ? this.kickbans.has(p._id) : false
       },
       ppl: [...this.participants.values()].map((z) => {
+        if(p) {
+          if(!p.user.permissions.hasPermission("vanish") && z.user.vanished) {
+            return;
+          }
+        }
         return {
           _id: z.user._id,
           id: z.pID,
@@ -502,8 +507,9 @@ export default class Channel {
           tag: z.user.permissions.getTag(),
           x: z.x,
           y: z.y,
+          vanished: z.user.vanished
         };
-      }),
+      }).filter(Boolean),
     };
   }
 
