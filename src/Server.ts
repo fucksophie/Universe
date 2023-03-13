@@ -575,7 +575,8 @@ export default class Server {
         Server.listeners.add(ws.client);
         let json = [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch);
 
-        if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms")) json = json.filter(z => z.settings.visible != false)
+        if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms"))
+          json = json.filter(z => z.settings.visible != false || z._id == ch._id)
 
         ws.client.sendArray({
           m: "ls",
