@@ -72,6 +72,7 @@ export default class Client {
     clearInterval(this.bufferTick as unknown as number);
     Object.values(this.quotas).map((z) => z.destroy());
     Server.listeners.delete(this);
+    Server.customListeners.delete(this);
 
     if(this.ws.readyState == 1) this.ws.close(3000, "client destroyed");
 

@@ -174,6 +174,7 @@ export default class Server {
   static users = new Map<string, User>();
 
   static listeners = new Set<Client>();
+  static customListeners = new Set<Client>();
 
   constructor() {
     setInterval(async () => { // TODO: shitty workaround for a memoryleak somewhere idk (or maybe shitty bun gc?? ja neznaju)
@@ -549,8 +550,96 @@ export default class Server {
       }
     }
 
+    if(data.m == "custom") {
+      const ch = ws.client.channel;
+      if (!ch) return;
+
+      if(!data.target) return;
+      if(!data.data) return;
+      if(typeof data.target !== "object") return;
+      if(!data.target.mode) return;
+      let global; Boolean;
+      if(!data.target.global) global = false; else global = true;
+
+      let part = ch.getPart(ws.client);
+
+      let param = {
+          "m": "custom",
+          "data": data.data,
+          p: part.pID
+      };
+
+      if(data.target.mode == "subscribed") {
+          for (let cc of Array.from(Server.customListeners.values())) {
+              if(!cc.channel) return;
+
+              if (!global) {
+                  if(cc.channel._id !== ws.client.channel._id) {
+                      return;
+                  }
+              }
+              cc.sendArray(param)
+          }
+      } else if(data.target.mode == "id") {
+          if(!data.target.id) return;
+          if(typeof data.target.id !== "string") return;
+          if(!global) {
+            let part = ch.getPart(data.target.id);
+
+            if(!part) part = [...ch.participants].find(z => z[1].pID == data.target.id)?.[1];
+            if(!part) return;
+            part.clients.forEach(z => z.sendArray(param))
+          } else {
+            Server.channels.forEach(z => {
+              let part = z.getPart(data.target.id);
+
+              if(!part) part = [...z.participants].find(z => z[1].pID == data.target.id)?.[1];
+              if(!part) return;
+
+              part.clients.forEach(z => z.sendArray(param))
+            })
+          }
+
+      } else if(data.target.mode == "ids") {
+          if(!data.target.ids) return;
+          if(!Array.isArray(data.target.ids)) return;
+          if(data.target.ids.length > 32) return;
+          if(!data.target.ids.every(i => typeof i === "string")) return;
+          if(!global) {
+            data.target.ids.forEach(id => {
+              if(!id) return;
+              let part = ch.getPart(id);
+
+              if(!part) part = [...ch.participants].find(z => z[1].pID == id)?.[1];
+              if(!part) return;
+              part.clients.forEach(z => z.sendArray(param))
+            })
+          } else {
+            data.target.ids.forEach(id => {
+              if(!id) return;
+              Server.channels.forEach(z => {
+                let part = z.getPart(id);
+
+                if(!part) part = [...z.participants].find(z => z[1].pID == id)?.[1];
+                if(!part) return;
+
+                part.clients.forEach(z => z.sendArray(param))
+              })
+            })
+          }
+      }
+    }
     if (data.m == "-ls") {
       Server.listeners.delete(ws.client);
+    }
+    if (data.m == "-custom") {
+      Server.customListeners.delete(ws.client);
+    }
+
+    if (data.m == "+custom") {
+      if (!Server.customListeners.has(ws.client)) {
+        Server.customListeners.add(ws.client);
+      }
     }
 
     if (data.m == "userset") {
