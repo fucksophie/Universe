@@ -21,9 +21,7 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       "Your ID is \`" + part._id + "\`, id is \`" + part.pID + "\`",
     );
   }
-  if (command == "~pobjs") {
-    ch.dmAsServer(part, getProtectedObjects().join(", "));
-  }
+
   if (command == "~experms") {
     if (!part.user.permissions.hasPermission("command.experms")) {
       ch.dmAsServer(part, "No permissions.");
