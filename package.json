@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "bun-types": "^0.5.7",
+    "chalk": "^5.2.0",
+    "javascript-obfuscator": "^4.0.2"
+  }
+}
