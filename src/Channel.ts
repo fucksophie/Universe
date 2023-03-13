@@ -312,6 +312,7 @@ export default class Channel {
   chown(id: string | undefined = undefined) {
     if (id) {
       let part = [...this.participants.values()].find((z) => z.pID == id);
+      if(!part) return;
       this.config.crown = {
         participantId: part.pID,
         userId: part._id,
