@@ -271,6 +271,27 @@ export default class Server {
       });
     }
 
+    if(data.m == "v") {
+      if (!ws.client) return;
+
+      let ch = ws.client.channel;
+      if (!ch) return;
+      let part = ch.getPart(ws.client);
+      if (!part) return;
+
+      if(typeof data.vanish != "boolean") return;
+
+      if(!part.user.vanished && data.vanish) {
+        ch.broadcastToChannel({
+          m: "bye",
+          p: part.pID,
+        }, ws.client.getID());
+      }
+
+      part.user.vanished = data.vanish;
+      part.user.emit("update") // manual update which doesn't actually update the DB
+
+    }
     if (data.m == "ch") {
       if (!ws.client) return;
 
@@ -539,6 +560,18 @@ export default class Server {
         t: Date.now(),
         e: data.e,
       });
+    }
+
+    if (data.m == "+ls") {
+      if (!Server.listeners.has(ws.client)) {
+        Server.listeners.add(ws.client);
+
+        ws.client.sendArray({
+          m: "ls",
+          c: true,
+          u: [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch),
+        });
+      }
     }
 
     if (data.m == "+ls") {

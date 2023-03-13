@@ -215,7 +215,15 @@ export default class Channel {
       part.channel = this._id;
       part.clients.push(c);
       this.participants.set(c.getID(), part);
-      this.broadcastToChannel(part.toJson(), c.getID());
+
+      let json = part.toJson()
+
+      for(const [_, z] of this.participants) {
+        if(z._id == c.getID()) continue;
+        if(part.user.vanished && !z.user.permissions.hasPermission("vanish")) continue;
+
+        z.clients.forEach((b) => b.sendArray(json));
+      }
     }
     if (
       this.participants.size == 1 &&
@@ -474,6 +482,24 @@ export default class Channel {
     recipient.clients.forEach((z) => z.sendArray(packet));
   }
   toJson(p: Participiant) {
+    let ppl = [...this.participants.values()].map((z) => {
+      if(p) {
+        if(!p.user.permissions.hasPermission("vanish") && z.user.vanished) {
+          return;
+        }
+      }
+      return {
+        _id: z.user._id,
+        id: z.pID,
+        name: z.user.name,
+        color: "#" + z.user.color,
+        tag: z.user.permissions.getTag(),
+        x: z.x,
+        y: z.y,
+        vanished: z.user.vanished
+      };
+    }).filter(Boolean);
+
     return {
       ch: {
         settings: {
@@ -489,27 +515,11 @@ export default class Channel {
         },
         _id: this._id,
         id: this._id,
-        count: this.participants.size,
+        count: ppl.length,
         crown: this.config.crown,
         banned: p ? this.kickbans.has(p._id) : false
       },
-      ppl: [...this.participants.values()].map((z) => {
-        if(p) {
-          if(!p.user.permissions.hasPermission("vanish") && z.user.vanished) {
-            return;
-          }
-        }
-        return {
-          _id: z.user._id,
-          id: z.pID,
-          name: z.user.name,
-          color: "#" + z.user.color,
-          tag: z.user.permissions.getTag(),
-          x: z.x,
-          y: z.y,
-          vanished: z.user.vanished
-        };
-      }).filter(Boolean),
+      ppl,
     };
   }
 

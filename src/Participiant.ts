@@ -26,6 +26,7 @@ export default class Participiant {
       tag: this.user.permissions.getTag(),
       x: this.x,
       y: this.y,
+      vanished: this.user.vanished
     };
   }
 
@@ -46,7 +47,15 @@ export default class Participiant {
 
     this.updateListener = (() => {
       let ch = Server.getChannel(this.channel);
-      ch.broadcastToChannel(this.toJson());
+
+      let json = this.toJson();
+
+      for(const [_, z] of ch.participants) {
+        if(this.user.vanished && !z.user.permissions.hasPermission("vanish")) continue;
+
+        z.clients.forEach((b) => b.sendArray(json));
+      }
+
       Object.values(this.quotas).map((z) => z.emit("update"));
     }).bind(this);
 
