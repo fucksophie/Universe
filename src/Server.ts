@@ -584,14 +584,14 @@ export default class Server {
           if(!data.target.id) return;
           if(typeof data.target.id !== "string") return;
           if(!global) {
-            let part = ch.getPart(data.target.id);
+            let part = ch.participants.get(data.target.id);
 
             if(!part) part = [...ch.participants].find(z => z[1].pID == data.target.id)?.[1];
             if(!part) return;
             part.clients.forEach(z => z.sendArray(param))
           } else {
             Server.channels.forEach(z => {
-              let part = z.getPart(data.target.id);
+              let part = z.participants.get(data.target.id);
 
               if(!part) part = [...z.participants].find(z => z[1].pID == data.target.id)?.[1];
               if(!part) return;
@@ -608,7 +608,7 @@ export default class Server {
           if(!global) {
             data.target.ids.forEach(id => {
               if(!id) return;
-              let part = ch.getPart(id);
+              let part = ch.participants.get(id);
 
               if(!part) part = [...ch.participants].find(z => z[1].pID == id)?.[1];
               if(!part) return;
@@ -618,7 +618,7 @@ export default class Server {
             data.target.ids.forEach(id => {
               if(!id) return;
               Server.channels.forEach(z => {
-                let part = z.getPart(id);
+                let part = z.participants.get(id);
 
                 if(!part) part = [...z.participants].find(z => z[1].pID == id)?.[1];
                 if(!part) return;
