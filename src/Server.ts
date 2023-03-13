@@ -210,510 +210,513 @@ export default class Server {
   static async requestHandler(ws: UniverseWS, raw: string | Uint8Array) {
     if (raw instanceof Uint8Array) return;
 
-    let data;
+    let hh;
     try {
-      data = JSON.parse(raw)[0];
+      hh = JSON.parse(raw);
     } catch {
       return;
     }
 
-    if (ws.antibot.verifyMessage(ws, data)) {
-      ws.client.notify(
-        "Antibot!",
-        "The antibot isn't that hard to bypass. Please try harder.",
-      );
-      setTimeout(() => {
+    if(!Array.isArray(hh)) return;
+
+    hh.forEach(data => {
+      if (ws.antibot.verifyMessage(ws, data)) {
+        ws.client.notify(
+          "Antibot!",
+          "The antibot isn't that hard to bypass. Please try harder.",
+        );
+        setTimeout(() => {
+          ws.close();
+        }, 120);
+        return;
+      }
+
+      if (data.m == "hi") {
+        if (ws.hiSent) return;
+        ws.hiSent = true;
+
+        if (data.token) {
+          let dd = User.getToken(data.token);
+          if (dd.length != 0) ws.client.id = dd[0]._id;
+        }
+
+        // EXPLANATION:
+        // This code attempts to find a user with the same _ID as our logging in user
+        // if found, merges both quotas together
+        // so both users do the same thing.
+        // If 20 users join, first user will get it's quotas set,
+        // then the second one joining in will get the first ones quotas,
+        // then the third one will get the second one's quotas (still the first ones!)
+
+        let sameIDUser = Server.clients.find((z) =>
+          z.getID() == ws.client.getID() && z.ws != ws
+        );
+
+        if (sameIDUser) {
+          ws.client.quotas = sameIDUser.quotas;
+        } else {
+          ws.client.initQuotas();
+        }
+
+        let user = new User(ws.client.getID());
+
+        ws.client.sendArray({
+          m: "hi",
+          token: user.token,
+          permissions: user.permissions.mppcPermissions(),
+          t: Date.now(),
+          u: {
+            _id: user._id,
+            name: user.name,
+            color: user.color,
+            tag: user.permissions.getTag(),
+          },
+        });
+      }
+
+      if(data.m == "v") {
+        if (!ws.client) return;
+
+        let ch = ws.client.channel;
+        if (!ch) return;
+        let part = ch.getPart(ws.client);
+        if (!part) return;
+
+        if(typeof data.vanish != "boolean") return;
+
+        if(!part.user.vanished && data.vanish) {
+          ch.broadcastToChannel({
+            m: "bye",
+            p: part.pID,
+          }, ws.client.getID());
+        }
+
+        part.user.vanished = data.vanish;
+        part.user.emit("update") // manual update which doesn't actually update the DB
+
+      }
+      if (data.m == "ch") {
+        if (!ws.client) return;
+
+        if (!data._id) return;
+        if (typeof data._id !== "string") return;
+        if (data._id.length > 50) return;
+
+        let set = validateSet(data.set);
+
+        if (!ws.client.quotas.channelChange.isAvailable()) return;
+
+        const prevCh = ws.client.channel;
+
+        if (prevCh) prevCh.removeClient(ws.client);
+
+        const ch = Server.getChannel(data._id, set);
+
+        ch.addClient(ws.client);
+      }
+
+      if (data.m == "chset") {
+        let ch = ws.client.channel;
+        if (!ch) return;
+
+        if (
+          !ch.getPart(ws.client).user.permissions.hasPermission(
+            "rooms.chsetAnywhere",
+          )
+        ) {
+          if (!ch.config.crown) return;
+          if (ch.config.crown.userId !== ws.client.getID() || ch.crownOnGround) {
+            return;
+          }
+        }
+
+        let cfg = validateSet(data.set, ch.config);
+        ch.config = cfg;
+        ch.updateChannel();
+      }
+
+      if (data.m == "chown") {
+        if (!ws.client) return;
+
+        let ch = ws.client.channel;
+        if (!ch) return;
+        let part = ch.getPart(ws.client);
+        if (!part) return;
+
+        if (part.user.permissions.hasPermission("rooms.chownAnywhere")) {
+          ch.chown(data.id);
+          return;
+        }
+
+        if (!part.quotas.chown.isAvailable()) return;
+
+        // EXPLANATION: check if crown if 15 seconds have lasted after last crown update,
+        // if have, we check if we aren't the previous owner, and then pick up the crown if
+        // available
+        if (
+          ch.config.crown.userId !== ws.client.getID() &&
+          (Date.now() - ch.config.crown.time) > 15000
+        ) {
+          ws.client.updateQuotaFlags(2);
+          ch.chown(part.pID);
+          ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
+          return;
+        }
+
+        // EXPLANATION: if we dropped a crown, we can pick it back up with this
+        if (
+          ch.config.crown.userId == ws.client.getID() && data.id == part.pID &&
+          ch.crownOnGround
+        ) {
+          ws.client.updateQuotaFlags(2);
+          ch.chown(data.id);
+          ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
+          return;
+        }
+
+        if (data.id) {
+          // EXPLANATION: check if id is not us, then check if we own the crown, and if it's on the ground
+          // if so, we give the crown to the person we specified
+
+          if (
+            data.id !== ws.client.getID() &&
+            ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround
+          ) {
+            ws.client.updateQuotaFlags(0);
+            ch.chown(data.id);
+            ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
+          }
+        } else {
+          // EXPLANATION: ID was not specified, meaning dropping of crown,
+          // however we have to check if the crown isn't on the ground, and
+          // if we actually own the crown.
+
+          if (ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround) {
+            ws.client.updateQuotaFlags(0);
+            ch.chown();
+            ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
+          }
+        }
+      }
+
+      if (data.m == "bye") {
         ws.close();
-      }, 120);
-      return;
-    }
-
-    if (data.m == "hi") {
-      if (ws.hiSent) return;
-      ws.hiSent = true;
-
-      if (data.token) {
-        let dd = User.getToken(data.token);
-        if (dd.length != 0) ws.client.id = dd[0]._id;
       }
 
-      // EXPLANATION:
-      // This code attempts to find a user with the same _ID as our logging in user
-      // if found, merges both quotas together
-      // so both users do the same thing.
-      // If 20 users join, first user will get it's quotas set,
-      // then the second one joining in will get the first ones quotas,
-      // then the third one will get the second one's quotas (still the first ones!)
+      if (data.m == "m") {
+        if (!verifyNumber(data?.x) || !verifyNumber(data?.y)) return;
 
-      let sameIDUser = Server.clients.find((z) =>
-        z.getID() == ws.client.getID() && z.ws != ws
-      );
+        if (ws.client.channel) {
+          let part = ws.client.channel.getPart(ws.client);
 
-      if (sameIDUser) {
-        ws.client.quotas = sameIDUser.quotas;
-      } else {
-        ws.client.initQuotas();
+          if(!part) return;
+
+          if (!part.quotas.mouseMove.isAvailable()) return;
+          ws.client.channel.moveMouse(part, +data.x, +data.y);
+        }
       }
 
-      let user = new User(ws.client.getID());
+      if (data.m == "setname") {
+        if(!data._id) return;
+        if(!data.name) return;
 
-      ws.client.sendArray({
-        m: "hi",
-        token: user.token,
-        permissions: user.permissions.mppcPermissions(),
-        t: Date.now(),
-        u: {
-          _id: user._id,
-          name: user.name,
-          color: user.color,
-          tag: user.permissions.getTag(),
-        },
-      });
-    }
+        const ch = ws.client.channel;
+        const part = ch.getPart(ws.client);
+        if(!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
+        let otherUser = ch.participants.get(data._id);
+        if(!otherUser) return;
+        if(data.name.length > 250) return;
+        if(data.name.trim().length == 0) return;
+        otherUser.user.name = data.name;
+        otherUser.user.commit();
+      }
 
-    if(data.m == "v") {
-      if (!ws.client) return;
+      if (data.m == "setcolor") {
+        if(!data._id) return;
+        if(!data.color) return;
 
-      let ch = ws.client.channel;
-      if (!ch) return;
-      let part = ch.getPart(ws.client);
-      if (!part) return;
+        const ch = ws.client.channel;
+        const part = ch.getPart(ws.client);
+        if(!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
+        let otherUser = ch.participants.get(data._id);
+        if(!otherUser) return;
+        if(!verifyColor(data.color)) return;
+        otherUser.user.color = data.color.substring(1);
+        otherUser.user.commit();
+      }
 
-      if(typeof data.vanish != "boolean") return;
+      if (data.m == "kickban") {
+        if(!data._id) return;
 
-      if(!part.user.vanished && data.vanish) {
+        const ch = ws.client.channel;
+        const part = ch.getPart(ws.client);
+
+        if(!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
+          if(ch.crownOnGround) return;
+          if(!ch.config.crown) return;
+          if(ch.config.crown.userId !== part._id) return;
+        }
+
+        let otherUser = ch.participants.get(data._id);
+        if(!otherUser) return;
+
+        let ms = 3600000;
+
+        if(data.ms) {
+          if(verifyNumber(data.ms)) ms = data.ms;
+        }
+
+        if(!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
+          if(!part.quotas.kickban.isAvailable()) return;
+        }
+
+        ch.kickban(otherUser, part, ms);
+      }
+
+      if (data.m == "clearchat") {
+        const ch = ws.client.channel;
+        const part = ch.getPart(ws.client);
+        if(!part.user.permissions.hasPermission("rooms.clearChat")) return;
+
+        ch.chatHistory = []
         ch.broadcastToChannel({
-          m: "bye",
+          m: "c",
+          c: []
+        })
+      }
+
+      if (data.m == "dm") {
+        const ch = ws.client.channel;
+        if (!ch) return;
+        if (!data.message) return;
+        if (!data._id) return;
+        if (typeof data.message !== "string") return;
+        if (data.message.length > 512) return;
+
+        let otherUser = ch.participants.get(data._id);
+        if (!otherUser) return;
+        let part = ch.getPart(ws.client);
+        if (!part.quotas.dm.isAvailable()) return;
+
+        ch.dm(part, otherUser, data.message);
+      }
+
+      if (data.m == "a") {
+        const ch = ws.client.channel;
+        if (!ch) return;
+        if (!data.message) return;
+        if (typeof data.message !== "string") return;
+        if (data.message.length > 512) return;
+
+        let part = ch.getPart(ws.client);
+        if (!part.quotas.chat.isAvailable()) return;
+
+        ch.message(part, data.message);
+
+        parseCommand(ws, data.message);
+      }
+
+      if (data.m == "n") {
+        const ch = ws.client.channel;
+
+        if (!ch) return;
+
+        if (
+          ch.config.settings.crownsolo &&
+          ch.config.crown?.userId !== ws.client.getID()
+        ) return;
+
+        if (!Array.isArray(data.n)) return;
+
+        // EXPLANATION: per MPPclone rules we check if
+        // delay is smaller than 200
+        // z.v is 1 or 0 inclusive
+        // z.s is 0, false, undefined or 1
+        // z.n is one of the MPP keys
+
+        let isBad = data.n.find((z) => {
+          if (z.d > 200) return true;
+          if (z.v > 1 || z.v < 0) return true;
+          if (!(!z.s || z.s == 1)) return true;
+          if (!noteKeys.includes(z.n)) return true;
+          return false;
+        });
+
+        if (isBad) return;
+
+        let part = ch.getPart(ws.client);
+
+        if (!part) return;
+        if (!part.quotas.note.isAvailable(data.n.length)) return;
+
+        ch.broadcastToChannel({
+          m: "n",
+          t: data.t,
+          n: data.n,
           p: part.pID,
         }, ws.client.getID());
       }
 
-      part.user.vanished = data.vanish;
-      part.user.emit("update") // manual update which doesn't actually update the DB
+      if (data.m == "t") {
+        if (!verifyNumber(data.e)) return;
 
-    }
-    if (data.m == "ch") {
-      if (!ws.client) return;
-
-      if (!data._id) return;
-      if (typeof data._id !== "string") return;
-      if (data._id.length > 50) return;
-
-      let set = validateSet(data.set);
-
-      if (!ws.client.quotas.channelChange.isAvailable()) return;
-
-      const prevCh = ws.client.channel;
-
-      if (prevCh) prevCh.removeClient(ws.client);
-
-      const ch = Server.getChannel(data._id, set);
-
-      ch.addClient(ws.client);
-    }
-
-    if (data.m == "chset") {
-      let ch = ws.client.channel;
-      if (!ch) return;
-
-      if (
-        !ch.getPart(ws.client).user.permissions.hasPermission(
-          "rooms.chsetAnywhere",
-        )
-      ) {
-        if (!ch.config.crown) return;
-        if (ch.config.crown.userId !== ws.client.getID() || ch.crownOnGround) {
-          return;
-        }
+        ws.client.sendArray({
+          m: "t",
+          t: Date.now(),
+          e: data.e,
+        });
       }
 
-      let cfg = validateSet(data.set, ch.config);
-      ch.config = cfg;
-      ch.updateChannel();
-    }
+      if (data.m == "+ls") {
+        const ch = ws.client.channel;
 
-    if (data.m == "chown") {
-      if (!ws.client) return;
+        if(!ch) return;
 
-      let ch = ws.client.channel;
-      if (!ch) return;
-      let part = ch.getPart(ws.client);
-      if (!part) return;
-
-      if (part.user.permissions.hasPermission("rooms.chownAnywhere")) {
-        ch.chown(data.id);
-        return;
-      }
-
-      if (!part.quotas.chown.isAvailable()) return;
-
-      // EXPLANATION: check if crown if 15 seconds have lasted after last crown update,
-      // if have, we check if we aren't the previous owner, and then pick up the crown if
-      // available
-      if (
-        ch.config.crown.userId !== ws.client.getID() &&
-        (Date.now() - ch.config.crown.time) > 15000
-      ) {
-        ws.client.updateQuotaFlags(2);
-        ch.chown(part.pID);
-        ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
-        return;
-      }
-
-      // EXPLANATION: if we dropped a crown, we can pick it back up with this
-      if (
-        ch.config.crown.userId == ws.client.getID() && data.id == part.pID &&
-        ch.crownOnGround
-      ) {
-        ws.client.updateQuotaFlags(2);
-        ch.chown(data.id);
-        ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
-        return;
-      }
-
-      if (data.id) {
-        // EXPLANATION: check if id is not us, then check if we own the crown, and if it's on the ground
-        // if so, we give the crown to the person we specified
-
-        if (
-          data.id !== ws.client.getID() &&
-          ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround
-        ) {
-          ws.client.updateQuotaFlags(0);
-          ch.chown(data.id);
-          ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
-        }
-      } else {
-        // EXPLANATION: ID was not specified, meaning dropping of crown,
-        // however we have to check if the crown isn't on the ground, and
-        // if we actually own the crown.
-
-        if (ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround) {
-          ws.client.updateQuotaFlags(0);
-          ch.chown();
-          ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
-        }
-      }
-    }
-
-    if (data.m == "bye") {
-      ws.close();
-    }
-
-    if (data.m == "m") {
-      if (!verifyNumber(data?.x) || !verifyNumber(data?.y)) return;
-
-      if (ws.client.channel) {
-        let part = ws.client.channel.getPart(ws.client);
+        let part = ch.getPart(ws.client);
 
         if(!part) return;
 
-        if (!part.quotas.mouseMove.isAvailable()) return;
-        ws.client.channel.moveMouse(part, +data.x, +data.y);
-      }
-    }
+        if (!Server.listeners.has(ws.client)) {
+          Server.listeners.add(ws.client);
+          let json = [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch);
 
-    if (data.m == "setname") {
-      if(!data._id) return;
-      if(!data.name) return;
+          if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms"))
+            json = json.filter(z => z.settings.visible != false || z._id == ch._id)
 
-      const ch = ws.client.channel;
-      const part = ch.getPart(ws.client);
-      if(!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
-      let otherUser = ch.participants.get(data._id);
-      if(!otherUser) return;
-      if(data.name.length > 250) return;
-      if(data.name.trim().length == 0) return;
-      otherUser.user.name = data.name;
-      otherUser.user.commit();
-    }
-
-    if (data.m == "setcolor") {
-      if(!data._id) return;
-      if(!data.color) return;
-
-      const ch = ws.client.channel;
-      const part = ch.getPart(ws.client);
-      if(!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
-      let otherUser = ch.participants.get(data._id);
-      if(!otherUser) return;
-      if(!verifyColor(data.color)) return;
-      otherUser.user.color = data.color.substring(1);
-      otherUser.user.commit();
-    }
-
-    if (data.m == "kickban") {
-      if(!data._id) return;
-
-      const ch = ws.client.channel;
-      const part = ch.getPart(ws.client);
-
-      if(!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
-        if(ch.crownOnGround) return;
-        if(!ch.config.crown) return;
-        if(ch.config.crown.userId !== part._id) return;
+          ws.client.sendArray({
+            m: "ls",
+            c: true,
+            u: json
+          });
+        }
       }
 
-      let otherUser = ch.participants.get(data._id);
-      if(!otherUser) return;
+      if(data.m == "custom") {
+        const ch = ws.client.channel;
+        if (!ch) return;
 
-      let ms = 3600000;
+        if(!data.target) return;
+        if(!data.data) return;
+        if(typeof data.target !== "object") return;
+        if(!data.target.mode) return;
+        let global; Boolean;
+        if(!data.target.global) global = false; else global = true;
 
-      if(data.ms) {
-        if(verifyNumber(data.ms)) ms = data.ms;
-      }
+        let part = ch.getPart(ws.client);
 
-      if(!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
-        if(!part.quotas.kickban.isAvailable()) return;
-      }
+        let param = {
+            "m": "custom",
+            "data": data.data,
+            p: part.pID
+        };
 
-      ch.kickban(otherUser, part, ms);
-    }
+        if(data.target.mode == "subscribed") {
+            for (let cc of Array.from(Server.customListeners.values())) {
+                if(!cc.channel) return;
 
-    if (data.m == "clearchat") {
-      const ch = ws.client.channel;
-      const part = ch.getPart(ws.client);
-      if(!part.user.permissions.hasPermission("rooms.clearChat")) return;
+                if (!global) {
+                    if(cc.channel._id !== ws.client.channel._id) {
+                        return;
+                    }
+                }
+                cc.sendArray(param)
+            }
+        } else if(data.target.mode == "id") {
+            if(!data.target.id) return;
+            if(typeof data.target.id !== "string") return;
+            if(!global) {
+              let part = ch.participants.get(data.target.id);
 
-      ch.chatHistory = []
-      ch.broadcastToChannel({
-        m: "c",
-        c: []
-      })
-    }
-
-    if (data.m == "dm") {
-      const ch = ws.client.channel;
-      if (!ch) return;
-      if (!data.message) return;
-      if (!data._id) return;
-      if (typeof data.message !== "string") return;
-      if (data.message.length > 512) return;
-
-      let otherUser = ch.participants.get(data._id);
-      if (!otherUser) return;
-      let part = ch.getPart(ws.client);
-      if (!part.quotas.dm.isAvailable()) return;
-
-      ch.dm(part, otherUser, data.message);
-    }
-
-    if (data.m == "a") {
-      const ch = ws.client.channel;
-      if (!ch) return;
-      if (!data.message) return;
-      if (typeof data.message !== "string") return;
-      if (data.message.length > 512) return;
-
-      let part = ch.getPart(ws.client);
-      if (!part.quotas.chat.isAvailable()) return;
-
-      ch.message(part, data.message);
-
-      parseCommand(ws, data.message);
-    }
-
-    if (data.m == "n") {
-      const ch = ws.client.channel;
-
-      if (!ch) return;
-
-      if (
-        ch.config.settings.crownsolo &&
-        ch.config.crown?.userId !== ws.client.getID()
-      ) return;
-
-      if (!Array.isArray(data.n)) return;
-
-      // EXPLANATION: per MPPclone rules we check if
-      // delay is smaller than 200
-      // z.v is 1 or 0 inclusive
-      // z.s is 0, false, undefined or 1
-      // z.n is one of the MPP keys
-
-      let isBad = data.n.find((z) => {
-        if (z.d > 200) return true;
-        if (z.v > 1 || z.v < 0) return true;
-        if (!(!z.s || z.s == 1)) return true;
-        if (!noteKeys.includes(z.n)) return true;
-        return false;
-      });
-
-      if (isBad) return;
-
-      let part = ch.getPart(ws.client);
-
-      if (!part) return;
-      if (!part.quotas.note.isAvailable(data.n.length)) return;
-
-      ch.broadcastToChannel({
-        m: "n",
-        t: data.t,
-        n: data.n,
-        p: part.pID,
-      }, ws.client.getID());
-    }
-
-    if (data.m == "t") {
-      if (!verifyNumber(data.e)) return;
-
-      ws.client.sendArray({
-        m: "t",
-        t: Date.now(),
-        e: data.e,
-      });
-    }
-
-    if (data.m == "+ls") {
-      const ch = ws.client.channel;
-
-      if(!ch) return;
-
-      let part = ch.getPart(ws.client);
-
-      if(!part) return;
-
-      if (!Server.listeners.has(ws.client)) {
-        Server.listeners.add(ws.client);
-        let json = [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch);
-
-        if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms"))
-          json = json.filter(z => z.settings.visible != false || z._id == ch._id)
-
-        ws.client.sendArray({
-          m: "ls",
-          c: true,
-          u: json
-        });
-      }
-    }
-
-    if(data.m == "custom") {
-      const ch = ws.client.channel;
-      if (!ch) return;
-
-      if(!data.target) return;
-      if(!data.data) return;
-      if(typeof data.target !== "object") return;
-      if(!data.target.mode) return;
-      let global; Boolean;
-      if(!data.target.global) global = false; else global = true;
-
-      let part = ch.getPart(ws.client);
-
-      let param = {
-          "m": "custom",
-          "data": data.data,
-          p: part.pID
-      };
-
-      if(data.target.mode == "subscribed") {
-          for (let cc of Array.from(Server.customListeners.values())) {
-              if(!cc.channel) return;
-
-              if (!global) {
-                  if(cc.channel._id !== ws.client.channel._id) {
-                      return;
-                  }
-              }
-              cc.sendArray(param)
-          }
-      } else if(data.target.mode == "id") {
-          if(!data.target.id) return;
-          if(typeof data.target.id !== "string") return;
-          if(!global) {
-            let part = ch.participants.get(data.target.id);
-
-            if(!part) part = [...ch.participants].find(z => z[1].pID == data.target.id)?.[1];
-            if(!part) return;
-            part.clients.forEach(z => z.sendArray(param))
-          } else {
-            Server.channels.forEach(z => {
-              let part = z.participants.get(data.target.id);
-
-              if(!part) part = [...z.participants].find(z => z[1].pID == data.target.id)?.[1];
-              if(!part) return;
-
-              part.clients.forEach(z => z.sendArray(param))
-            })
-          }
-
-      } else if(data.target.mode == "ids") {
-          if(!data.target.ids) return;
-          if(!Array.isArray(data.target.ids)) return;
-          if(data.target.ids.length > 32) return;
-          if(!data.target.ids.every(i => typeof i === "string")) return;
-          if(!global) {
-            data.target.ids.forEach(id => {
-              if(!id) return;
-              let part = ch.participants.get(id);
-
-              if(!part) part = [...ch.participants].find(z => z[1].pID == id)?.[1];
+              if(!part) part = [...ch.participants].find(z => z[1].pID == data.target.id)?.[1];
               if(!part) return;
               part.clients.forEach(z => z.sendArray(param))
-            })
-          } else {
-            data.target.ids.forEach(id => {
-              if(!id) return;
+            } else {
               Server.channels.forEach(z => {
-                let part = z.participants.get(id);
+                let part = z.participants.get(data.target.id);
 
-                if(!part) part = [...z.participants].find(z => z[1].pID == id)?.[1];
+                if(!part) part = [...z.participants].find(z => z[1].pID == data.target.id)?.[1];
                 if(!part) return;
 
                 part.clients.forEach(z => z.sendArray(param))
               })
-            })
-          }
+            }
+
+        } else if(data.target.mode == "ids") {
+            if(!data.target.ids) return;
+            if(!Array.isArray(data.target.ids)) return;
+            if(data.target.ids.length > 32) return;
+            if(!data.target.ids.every(i => typeof i === "string")) return;
+            if(!global) {
+              data.target.ids.forEach(id => {
+                if(!id) return;
+                let part = ch.participants.get(id);
+
+                if(!part) part = [...ch.participants].find(z => z[1].pID == id)?.[1];
+                if(!part) return;
+                part.clients.forEach(z => z.sendArray(param))
+              })
+            } else {
+              data.target.ids.forEach(id => {
+                if(!id) return;
+                Server.channels.forEach(z => {
+                  let part = z.participants.get(id);
+
+                  if(!part) part = [...z.participants].find(z => z[1].pID == id)?.[1];
+                  if(!part) return;
+
+                  part.clients.forEach(z => z.sendArray(param))
+                })
+              })
+            }
+        }
       }
-    }
-    if (data.m == "-ls") {
-      Server.listeners.delete(ws.client);
-    }
-    if (data.m == "-custom") {
-      Server.customListeners.delete(ws.client);
-    }
-
-    if (data.m == "+custom") {
-      if (!Server.customListeners.has(ws.client)) {
-        Server.customListeners.add(ws.client);
+      if (data.m == "-ls") {
+        Server.listeners.delete(ws.client);
       }
-    }
-
-    if (data.m == "userset") {
-      if (!ws.client) return;
-
-      if (!data.set) {
-        return;
-      }
-
-      if (!data.set.name && !data.set.color) return;
-
-      if (!ws.client.channel) return;
-
-      let part = ws.client.channel.getPart(ws.client);
-
-      let user = part.user;
-
-      if (data.set.name) {
-        if (typeof data.set.name !== "string") return;
-        if (data.set.name.length > 50) return;
-        user.name = data.set.name;
-      }
-
-      if (data.set.color) {
-        if (!verifyColor(data.set.color)) return;
-        user.color = data.set.color.substring(1);
+      if (data.m == "-custom") {
+        Server.customListeners.delete(ws.client);
       }
 
-      if (!part.user.permissions.hasPermission("rooms.usersetOthers")) {
-        if (!ws.client.quotas.userset.isAvailable()) return;
+      if (data.m == "+custom") {
+        if (!Server.customListeners.has(ws.client)) {
+          Server.customListeners.add(ws.client);
+        }
       }
 
-      user.commit();
-    }
+      if (data.m == "userset") {
+        if (!ws.client) return;
 
-    data = null;
+        if (!data.set) {
+          return;
+        }
+
+        if (!data.set.name && !data.set.color) return;
+
+        if (!ws.client.channel) return;
+
+        let part = ws.client.channel.getPart(ws.client);
+
+        let user = part.user;
+
+        if (data.set.name) {
+          if (typeof data.set.name !== "string") return;
+          if (data.set.name.length > 50) return;
+          user.name = data.set.name;
+        }
+
+        if (data.set.color) {
+          if (!verifyColor(data.set.color)) return;
+          user.color = data.set.color.substring(1);
+        }
+
+        if (!part.user.permissions.hasPermission("rooms.usersetOthers")) {
+          if (!ws.client.quotas.userset.isAvailable()) return;
+        }
+
+        user.commit();
+      }
+    })
+    hh = null;
   }
 
   async start() {
