@@ -289,10 +289,12 @@ export default class Channel {
 
   updateListeners() {
     Server.listeners.forEach((z) => {
+      let part = z.channel.getPart(z);
+      if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms") && !this.config.settings.visible) return;
       z.sendArray({
         m: "ls",
         c: false,
-        u: [this.toJson(z.channel.getPart(z)).ch],
+        u: [this.toJson(part).ch],
       });
     });
   }

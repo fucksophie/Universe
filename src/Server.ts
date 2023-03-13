@@ -563,25 +563,24 @@ export default class Server {
     }
 
     if (data.m == "+ls") {
+      const ch = ws.client.channel;
+
+      if(!ch) return;
+
+      let part = ch.getPart(ws.client);
+
+      if(!part) return;
+
       if (!Server.listeners.has(ws.client)) {
         Server.listeners.add(ws.client);
+        let json = [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch);
+
+        if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms")) json = json.filter(z => z.settings.visible != false)
 
         ws.client.sendArray({
           m: "ls",
           c: true,
-          u: [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch),
-        });
-      }
-    }
-
-    if (data.m == "+ls") {
-      if (!Server.listeners.has(ws.client)) {
-        Server.listeners.add(ws.client);
-
-        ws.client.sendArray({
-          m: "ls",
-          c: true,
-          u: [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch),
+          u: json
         });
       }
     }
