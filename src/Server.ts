@@ -715,6 +715,8 @@ export default class Server {
 
         user.commit();
       }
+
+      data = null;
     })
     hh = null;
   }
@@ -756,6 +758,8 @@ export default class Server {
 
           if (ch) ch.removeClient(ws.client);
           if (ws.client) ws.client.destroy();
+
+          ws = null;
         },
       },
       fetch(req, server) {
