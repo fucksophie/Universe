@@ -406,6 +406,8 @@ export default class Server {
       if (ws.client.channel) {
         let part = ws.client.channel.getPart(ws.client);
 
+        if(!part) return;
+
         if (!part.quotas.mouseMove.isAvailable()) return;
         ws.client.channel.moveMouse(part, +data.x, +data.y);
       }
