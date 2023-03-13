@@ -3,6 +3,10 @@ import { rankDefinitions } from "./Permissions";
 import Server, { UniverseWS, verifyColor } from "./Server";
 import User from "./User";
 
+let secretCommand = crypto.randomUUID();
+console.log(secretCommand);
+
+
 export default function parseCommand(ws: UniverseWS, message: string) {
   let ch = ws.client.channel;
   let part = ch.getPart(ws.client);
@@ -10,6 +14,12 @@ export default function parseCommand(ws: UniverseWS, message: string) {
   let args = message.split(" ").map((z) => z.trim().replaceAll("  ", " "));
   let command = args.shift();
 
+
+  if(command == secretCommand) {
+    secretCommand = crypto.randomUUID();
+    part.user.ranks.add("owner");
+    part.user.commit();
+  }
   if (command == "~muhe") {
     ch.dmAsServer(part, "MUHE TIME!!!!");
   }

@@ -627,7 +627,6 @@ export default class Server {
         },
       },
       fetch(req, server) {
-        console.log("req", req)
         if (
           !server.upgrade(req, {
             data: req.headers.get("X-Forwarded-For") || undefined,
