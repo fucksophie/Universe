@@ -643,6 +643,8 @@ export default class Server {
     }
 
     if (data.m == "userset") {
+      if (!ws.client) return;
+
       if (!data.set) {
         return;
       }
