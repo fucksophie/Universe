@@ -1,3 +1,4 @@
+import { generateHeapSnapshot } from "bun";
 import { getProtectedObjects } from "bun:jsc";
 import Hashing from "./Hashing";
 import { rankDefinitions } from "./Permissions";
@@ -15,6 +16,13 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     ch.dmAsServer(part, "MUHE TIME!!!!");
   }
 
+  if(command == "~heap") {
+    (async ()=>{
+      const snapshot = generateHeapSnapshot();
+      await Bun.write("heap"+Date.now()+".json", JSON.stringify(snapshot));
+      ch.messageAsServer("heap snapshot saved.")
+    })();
+  }
   if (command == "~id") {
     ch.dmAsServer(
       part,
