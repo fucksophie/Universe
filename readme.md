@@ -30,8 +30,8 @@ Features:
 `pick up crown anywhere`
 `channel watchdog (removing channels automatically after period of no use)`
 `kickbanning`
+`custom`
 .. and more!
 
 TODO:
 `siteban`
-`custom`
