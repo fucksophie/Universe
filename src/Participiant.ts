@@ -26,7 +26,7 @@ export default class Participiant {
       tag: this.user.permissions.getTag(),
       x: this.x,
       y: this.y,
-      vanished: this.user.vanished
+      vanished: this.user.vanished,
     };
   }
 
@@ -50,8 +50,10 @@ export default class Participiant {
 
       let json = this.toJson();
 
-      for(const [_, z] of ch.participants) {
-        if(this.user.vanished && !z.user.permissions.hasPermission("vanish")) continue;
+      for (const [_, z] of ch.participants) {
+        if (this.user.vanished && !z.user.permissions.hasPermission("vanish")) {
+          continue;
+        }
 
         z.clients.forEach((b) => b.sendArray(json));
       }
@@ -105,7 +107,9 @@ export default class Participiant {
   destroy() {
     this.user.removeListener("update", this.updateListener);
     Object.values(this.quotas).map((z) => z.destroy());
-    if(!Server.clients.find(z => z.getID() == this._id)) Server.users.delete(this.user._id);
+    if (!Server.clients.find((z) => z.getID() == this._id)) {
+      Server.users.delete(this.user._id);
+    }
 
     this.pID = null;
     this._id = null;

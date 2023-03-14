@@ -5,7 +5,9 @@ interface Rank {
   tag?: Tag;
 }
 
-export let validPermissions = `rooms.seeInvisibleRooms rooms.chownAnywhere vanish antibot.bypass rooms.chsetAnywhere * rooms.usersetOthers command.experms command.perms command.ranks command.generateToken rooms.seeDms command.addrank command.delrank command.addperm command.delperm command.settag command.deltag rooms.clearChat rooms.bypassLimit rooms.antiKickban quota.bypass.channelChange quota.force.channelChange.0 quota.bypass.userset quota.force.userset.0 quota.bypass.mouseMove quota.force.mouseMove.0 quota.bypass.chown quota.force.chown.0 quota.bypass.chat quota.force.chat.0 quota.force.chat.1 quota.force.chat.2 quota.bypass.dm quota.force.dm.0 quota.bypass.kickban quota.force.kickban.0 quota.bypass.note quota.force.note.0 quota.force.note.1 quota.force.note.2`.split(" ");
+export let validPermissions =
+  `rooms.seeInvisibleRooms rooms.chownAnywhere vanish antibot.bypass rooms.chsetAnywhere * rooms.usersetOthers command.experms command.perms command.ranks command.generateToken rooms.seeDms command.addrank command.delrank command.addperm command.delperm command.settag command.deltag rooms.clearChat rooms.bypassLimit rooms.antiKickban quota.bypass.channelChange quota.force.channelChange.0 quota.bypass.userset quota.force.userset.0 quota.bypass.mouseMove quota.force.mouseMove.0 quota.bypass.chown quota.force.chown.0 quota.bypass.chat quota.force.chat.0 quota.force.chat.1 quota.force.chat.2 quota.bypass.dm quota.force.dm.0 quota.bypass.kickban quota.force.kickban.0 quota.bypass.note quota.force.note.0 quota.force.note.1 quota.force.note.2`
+    .split(" ");
 
 export const rankDefinitions: Record<string, Rank> = {
   "owner": {
@@ -25,8 +27,8 @@ export const rankDefinitions: Record<string, Rank> = {
     ],
     tag: {
       text: "ADMIN",
-      color: "#E68100"
-    }
+      color: "#E68100",
+    },
   },
   "moderator": {
     priority: 8,
@@ -45,12 +47,12 @@ export const rankDefinitions: Record<string, Rank> = {
       "rooms.clearChat",
       "rooms.antiKickban",
       "vanish",
-      "rooms.seeInvisibleRooms"
+      "rooms.seeInvisibleRooms",
     ],
     tag: {
       text: "MOD",
-      color: "#E6CD00"
-    }
+      color: "#E6CD00",
+    },
   },
   "trusted": {
     priority: 7,
@@ -59,18 +61,18 @@ export const rankDefinitions: Record<string, Rank> = {
       "command.experms",
       "command.perms",
       "command.ranks",
-      "quota.force.note.2"
+      "quota.force.note.2",
     ],
     tag: {
       text: "TRUSTED",
-      color: "#9EE600"
-    }
+      color: "#9EE600",
+    },
   },
   "bot": {
     priority: 1,
     permissions: [
       "antibot.bypass",
-      "quota.bypass.mouseMove"
+      "quota.bypass.mouseMove",
     ],
     tag: {
       text: "BOT",
@@ -100,7 +102,7 @@ export class Permissions {
   setTag(text: string, color: string) {
     this.explicitTag = {
       text,
-      color
+      color,
     };
     this.user.commit();
   }
@@ -151,7 +153,7 @@ export class Permissions {
       returns.clearChat = true;
     }
 
-    if(this.hasPermission("vanish")) {
+    if (this.hasPermission("vanish")) {
       returns.vanish = true;
     }
 

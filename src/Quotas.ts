@@ -23,7 +23,9 @@ export default class Quota extends EventEmitter {
     this.user = user;
 
     this.on("update", () => {
-      this.bypassed = user.permissions.hasPermission("quota.bypass." + this.name);
+      this.bypassed = user.permissions.hasPermission(
+        "quota.bypass." + this.name,
+      );
 
       this.values.forEach((z, i) => {
         if (
@@ -32,7 +34,7 @@ export default class Quota extends EventEmitter {
       });
 
       this.selected = this.force;
-    })
+    });
 
     this.emit("update");
 

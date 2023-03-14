@@ -217,9 +217,9 @@ export default class Server {
       return;
     }
 
-    if(!Array.isArray(hh)) return;
+    if (!Array.isArray(hh)) return;
 
-    hh.forEach(data => {
+    hh.forEach((data) => {
       if (ws.antibot.verifyMessage(ws, data)) {
         ws.client.notify(
           "Antibot!",
@@ -274,7 +274,7 @@ export default class Server {
         });
       }
 
-      if(data.m == "v") {
+      if (data.m == "v") {
         if (!ws.client) return;
 
         let ch = ws.client.channel;
@@ -282,9 +282,9 @@ export default class Server {
         let part = ch.getPart(ws.client);
         if (!part) return;
 
-        if(typeof data.vanish != "boolean") return;
+        if (typeof data.vanish != "boolean") return;
 
-        if(!part.user.vanished && data.vanish) {
+        if (!part.user.vanished && data.vanish) {
           ch.broadcastToChannel({
             m: "bye",
             p: part.pID,
@@ -292,8 +292,7 @@ export default class Server {
         }
 
         part.user.vanished = data.vanish;
-        part.user.emit("update") // manual update which doesn't actually update the DB
-
+        part.user.emit("update"); // manual update which doesn't actually update the DB
       }
       if (data.m == "ch") {
         if (!ws.client) return;
@@ -325,7 +324,9 @@ export default class Server {
           )
         ) {
           if (!ch.config.crown) return;
-          if (ch.config.crown.userId !== ws.client.getID() || ch.crownOnGround) {
+          if (
+            ch.config.crown.userId !== ws.client.getID() || ch.crownOnGround
+          ) {
             return;
           }
         }
@@ -391,7 +392,9 @@ export default class Server {
           // however we have to check if the crown isn't on the ground, and
           // if we actually own the crown.
 
-          if (ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround) {
+          if (
+            ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround
+          ) {
             ws.client.updateQuotaFlags(0);
             ch.chown();
             ws.client.sendArray({ m: "nq", ...part.quotas.note.getRaw() });
@@ -409,7 +412,7 @@ export default class Server {
         if (ws.client.channel) {
           let part = ws.client.channel.getPart(ws.client);
 
-          if(!part) return;
+          if (!part) return;
 
           if (!part.quotas.mouseMove.isAvailable()) return;
           ws.client.channel.moveMouse(part, +data.x, +data.y);
@@ -417,57 +420,57 @@ export default class Server {
       }
 
       if (data.m == "setname") {
-        if(!data._id) return;
-        if(!data.name) return;
+        if (!data._id) return;
+        if (!data.name) return;
 
         const ch = ws.client.channel;
         const part = ch.getPart(ws.client);
-        if(!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
+        if (!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
         let otherUser = ch.participants.get(data._id);
-        if(!otherUser) return;
-        if(data.name.length > 250) return;
-        if(data.name.trim().length == 0) return;
+        if (!otherUser) return;
+        if (data.name.length > 250) return;
+        if (data.name.trim().length == 0) return;
         otherUser.user.name = data.name;
         otherUser.user.commit();
       }
 
       if (data.m == "setcolor") {
-        if(!data._id) return;
-        if(!data.color) return;
+        if (!data._id) return;
+        if (!data.color) return;
 
         const ch = ws.client.channel;
         const part = ch.getPart(ws.client);
-        if(!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
+        if (!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
         let otherUser = ch.participants.get(data._id);
-        if(!otherUser) return;
-        if(!verifyColor(data.color)) return;
+        if (!otherUser) return;
+        if (!verifyColor(data.color)) return;
         otherUser.user.color = data.color.substring(1);
         otherUser.user.commit();
       }
 
       if (data.m == "kickban") {
-        if(!data._id) return;
+        if (!data._id) return;
 
         const ch = ws.client.channel;
         const part = ch.getPart(ws.client);
 
-        if(!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
-          if(ch.crownOnGround) return;
-          if(!ch.config.crown) return;
-          if(ch.config.crown.userId !== part._id) return;
+        if (!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
+          if (ch.crownOnGround) return;
+          if (!ch.config.crown) return;
+          if (ch.config.crown.userId !== part._id) return;
         }
 
         let otherUser = ch.participants.get(data._id);
-        if(!otherUser) return;
+        if (!otherUser) return;
 
         let ms = 3600000;
 
-        if(data.ms) {
-          if(verifyNumber(data.ms)) ms = data.ms;
+        if (data.ms) {
+          if (verifyNumber(data.ms)) ms = data.ms;
         }
 
-        if(!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
-          if(!part.quotas.kickban.isAvailable()) return;
+        if (!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
+          if (!part.quotas.kickban.isAvailable()) return;
         }
 
         ch.kickban(otherUser, part, ms);
@@ -476,13 +479,13 @@ export default class Server {
       if (data.m == "clearchat") {
         const ch = ws.client.channel;
         const part = ch.getPart(ws.client);
-        if(!part.user.permissions.hasPermission("rooms.clearChat")) return;
+        if (!part.user.permissions.hasPermission("rooms.clearChat")) return;
 
-        ch.chatHistory = []
+        ch.chatHistory = [];
         ch.broadcastToChannel({
           m: "c",
-          c: []
-        })
+          c: [],
+        });
       }
 
       if (data.m == "dm") {
@@ -570,104 +573,122 @@ export default class Server {
       if (data.m == "+ls") {
         const ch = ws.client.channel;
 
-        if(!ch) return;
+        if (!ch) return;
 
         let part = ch.getPart(ws.client);
 
-        if(!part) return;
+        if (!part) return;
 
         if (!Server.listeners.has(ws.client)) {
           Server.listeners.add(ws.client);
-          let json = [...Server.channels.values()].map((z) => z.toJson(ws.client.channel.getPart(ws.client)).ch);
+          let json = [...Server.channels.values()].map((z) =>
+            z.toJson(ws.client.channel.getPart(ws.client)).ch
+          );
 
-          if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms"))
-            json = json.filter(z => z.settings.visible != false || z._id == ch._id)
+          if (!part.user.permissions.hasPermission("rooms.seeInvisibleRooms")) {
+            json = json.filter((z) =>
+              z.settings.visible != false || z._id == ch._id
+            );
+          }
 
           ws.client.sendArray({
             m: "ls",
             c: true,
-            u: json
+            u: json,
           });
         }
       }
 
-      if(data.m == "custom") {
+      if (data.m == "custom") {
         const ch = ws.client.channel;
         if (!ch) return;
 
-        if(!data.target) return;
-        if(!data.data) return;
-        if(typeof data.target !== "object") return;
-        if(!data.target.mode) return;
-        let global; Boolean;
-        if(!data.target.global) global = false; else global = true;
+        if (!data.target) return;
+        if (!data.data) return;
+        if (typeof data.target !== "object") return;
+        if (!data.target.mode) return;
+        let global;
+        Boolean;
+        if (!data.target.global) global = false;
+        else global = true;
 
         let part = ch.getPart(ws.client);
 
         let param = {
-            "m": "custom",
-            "data": data.data,
-            p: part.pID
+          "m": "custom",
+          "data": data.data,
+          p: part.pID,
         };
 
-        if(data.target.mode == "subscribed") {
-            for (let cc of Array.from(Server.customListeners.values())) {
-                if(!cc.channel) return;
+        if (data.target.mode == "subscribed") {
+          for (let cc of Array.from(Server.customListeners.values())) {
+            if (!cc.channel) return;
 
-                if (!global) {
-                    if(cc.channel._id !== ws.client.channel._id) {
-                        return;
-                    }
+            if (!global) {
+              if (cc.channel._id !== ws.client.channel._id) {
+                return;
+              }
+            }
+            cc.sendArray(param);
+          }
+        } else if (data.target.mode == "id") {
+          if (!data.target.id) return;
+          if (typeof data.target.id !== "string") return;
+          if (!global) {
+            let part = ch.participants.get(data.target.id);
+
+            if (!part) {
+              part = [...ch.participants].find((z) =>
+                z[1].pID == data.target.id
+              )?.[1];
+            }
+            if (!part) return;
+            part.clients.forEach((z) => z.sendArray(param));
+          } else {
+            Server.channels.forEach((z) => {
+              let part = z.participants.get(data.target.id);
+
+              if (!part) {
+                part = [...z.participants].find((z) =>
+                  z[1].pID == data.target.id
+                )?.[1];
+              }
+              if (!part) return;
+
+              part.clients.forEach((z) => z.sendArray(param));
+            });
+          }
+        } else if (data.target.mode == "ids") {
+          if (!data.target.ids) return;
+          if (!Array.isArray(data.target.ids)) return;
+          if (data.target.ids.length > 32) return;
+          if (!data.target.ids.every((i) => typeof i === "string")) return;
+          if (!global) {
+            data.target.ids.forEach((id) => {
+              if (!id) return;
+              let part = ch.participants.get(id);
+
+              if (!part) {
+                part = [...ch.participants].find((z) => z[1].pID == id)?.[1];
+              }
+              if (!part) return;
+              part.clients.forEach((z) => z.sendArray(param));
+            });
+          } else {
+            data.target.ids.forEach((id) => {
+              if (!id) return;
+              Server.channels.forEach((z) => {
+                let part = z.participants.get(id);
+
+                if (!part) {
+                  part = [...z.participants].find((z) => z[1].pID == id)?.[1];
                 }
-                cc.sendArray(param)
-            }
-        } else if(data.target.mode == "id") {
-            if(!data.target.id) return;
-            if(typeof data.target.id !== "string") return;
-            if(!global) {
-              let part = ch.participants.get(data.target.id);
+                if (!part) return;
 
-              if(!part) part = [...ch.participants].find(z => z[1].pID == data.target.id)?.[1];
-              if(!part) return;
-              part.clients.forEach(z => z.sendArray(param))
-            } else {
-              Server.channels.forEach(z => {
-                let part = z.participants.get(data.target.id);
-
-                if(!part) part = [...z.participants].find(z => z[1].pID == data.target.id)?.[1];
-                if(!part) return;
-
-                part.clients.forEach(z => z.sendArray(param))
-              })
-            }
-
-        } else if(data.target.mode == "ids") {
-            if(!data.target.ids) return;
-            if(!Array.isArray(data.target.ids)) return;
-            if(data.target.ids.length > 32) return;
-            if(!data.target.ids.every(i => typeof i === "string")) return;
-            if(!global) {
-              data.target.ids.forEach(id => {
-                if(!id) return;
-                let part = ch.participants.get(id);
-
-                if(!part) part = [...ch.participants].find(z => z[1].pID == id)?.[1];
-                if(!part) return;
-                part.clients.forEach(z => z.sendArray(param))
-              })
-            } else {
-              data.target.ids.forEach(id => {
-                if(!id) return;
-                Server.channels.forEach(z => {
-                  let part = z.participants.get(id);
-
-                  if(!part) part = [...z.participants].find(z => z[1].pID == id)?.[1];
-                  if(!part) return;
-
-                  part.clients.forEach(z => z.sendArray(param))
-                })
-              })
-            }
+                part.clients.forEach((z) => z.sendArray(param));
+              });
+            });
+          }
         }
       }
       if (data.m == "-ls") {
@@ -717,7 +738,7 @@ export default class Server {
       }
 
       data = null;
-    })
+    });
     hh = null;
   }
 
@@ -729,7 +750,6 @@ export default class Server {
         message: Server.requestHandler,
         maxPayloadLength: 16384,
         open(ws: UniverseWS) {
-
           let ip = "";
           if (ws.data) {
             ip = ws.data;

@@ -6,11 +6,11 @@ import User from "./User";
 
 function formatTime(t: number): string {
   let year: number,
-      month: number,
-      day: number,
-      hour: number,
-      minute: number,
-      second: number;
+    month: number,
+    day: number,
+    hour: number,
+    minute: number,
+    second: number;
 
   second = Math.floor(t / 1000);
   minute = Math.floor(second / 60);
@@ -25,8 +25,10 @@ function formatTime(t: number): string {
   month = month % 12;
 
   let timeS = "";
-  timeS += `${year ? year + " years, " : ""}${month ? month + " months, " : ""}${day ? day + " days, " : ""}`
-  timeS += `${hour} hours, ${minute} minutes, ${second} seconds`
+  timeS += `${year ? year + " years, " : ""}${
+    month ? month + " months, " : ""
+  }${day ? day + " days, " : ""}`;
+  timeS += `${hour} hours, ${minute} minutes, ${second} seconds`;
 
   return timeS;
 }
@@ -99,7 +101,7 @@ setInterval(() => { // Channel watchdog, interval*3 == time byebye
         z.destroy();
       }
     } else {
-      pings.set(z._id, 0)
+      pings.set(z._id, 0);
     }
   });
 }, 10000);
@@ -117,7 +119,7 @@ interface Chat {
     tag: {};
   };
   sender?: { _id: string; id: string; name: string; color: string; tag: {} };
-};
+}
 
 export default class Channel {
   participants = new Map<string, Participiant>();
@@ -129,7 +131,7 @@ export default class Channel {
   chatHistory: Chat[] = [];
 
   crownOnGround: boolean;
-  kickbans = new Map<string, Kickban>()
+  kickbans = new Map<string, Kickban>();
   constructor(_id: string, config: ChannelConfiguration | undefined) {
     this._id = _id;
 
@@ -144,45 +146,48 @@ export default class Channel {
 
   addToChatHistory(c: Chat) {
     this.chatHistory.push(c);
-    if(this.chatHistory.length > 50) this.chatHistory.shift()
+    if (this.chatHistory.length > 50) this.chatHistory.shift();
   }
 
   kickban(part: Participiant, bannedBy: Participiant, ms: number) {
-    if(part.user.permissions.hasPermission("rooms.antiKickban")) {
-      bannedBy.clients.forEach(z => {
-        z.notify("Error.", "You can't ban this user.")
-      })
+    if (part.user.permissions.hasPermission("rooms.antiKickban")) {
+      bannedBy.clients.forEach((z) => {
+        z.notify("Error.", "You can't ban this user.");
+      });
       return;
     }
     const ch = Server.getChannel("test/awkward");
 
     this.kickbans.set(part._id, {
       duration: ms,
-      creation: Date.now()
-    })
+      creation: Date.now(),
+    });
 
     let id = part._id; // #1
 
-    ch.message(bannedBy, "Banned " + part.user.name + " for " + ms + "ms. ")
+    ch.message(bannedBy, "Banned " + part.user.name + " for " + ms + "ms. ");
 
-    part.clients.forEach(z => {
+    part.clients.forEach((z) => {
       ch.addClient(z); // EXPLANATION: this drops the particpiant so we copy the id ->> #1
       this.removeClient(z);
-      z.notify("Aww.", "You've been kickbanned from this room. Time left: " + formatTime(ms));
-    })
+      z.notify(
+        "Aww.",
+        "You've been kickbanned from this room. Time left: " + formatTime(ms),
+      );
+    });
 
-    setTimeout(()=> {
+    setTimeout(() => {
       this.kickbans.delete(id);
-    }, ms)
+    }, ms);
   }
   addClient(c: Client) {
     c.channel = this;
 
     if (
       this.participants.size >= this.config.settings.limit &&
-      this._id != "test/awkward"
-      && c.getID() !== this.config.crown?.userId
-      && !new User(c.getID()).permissions.hasPermission("rooms.bypassLimit")
+      this._id != "test/awkward" &&
+      c.getID() !== this.config.crown?.userId &&
+      !new User(c.getID()).permissions.hasPermission("rooms.bypassLimit")
     ) {
       const ch = Server.getChannel("test/awkward");
       ch.addClient(c);
@@ -190,16 +195,20 @@ export default class Channel {
       return;
     }
 
-    if(this.kickbans.has(c.getID()) && this._id != "test/awkawrd") {
+    if (this.kickbans.has(c.getID()) && this._id != "test/awkawrd") {
       let ban = this.kickbans.get(c.getID());
-      let time = ban.creation-(Date.now()-ban.duration);
+      let time = ban.creation - (Date.now() - ban.duration);
 
-      if(time <= 0) {
+      if (time <= 0) {
         this.kickbans.delete(c.getID());
       } else {
         const ch = Server.getChannel("test/awkward");
         ch.addClient(c);
-        c.notify("Aww.", "You've been kickbanned from this room. Time left: " + formatTime(time));
+        c.notify(
+          "Aww.",
+          "You've been kickbanned from this room. Time left: " +
+            formatTime(time),
+        );
         return;
       }
     }
@@ -216,11 +225,13 @@ export default class Channel {
       part.clients.push(c);
       this.participants.set(c.getID(), part);
 
-      let json = part.toJson()
+      let json = part.toJson();
 
-      for(const [_, z] of this.participants) {
-        if(z._id == c.getID()) continue;
-        if(part.user.vanished && !z.user.permissions.hasPermission("vanish")) continue;
+      for (const [_, z] of this.participants) {
+        if (z._id == c.getID()) continue;
+        if (part.user.vanished && !z.user.permissions.hasPermission("vanish")) {
+          continue;
+        }
 
         z.clients.forEach((b) => b.sendArray(json));
       }
@@ -290,9 +301,12 @@ export default class Channel {
   updateListeners() {
     Server.listeners.forEach((z) => {
       let part = z.channel.getPart(z);
-      if(!part) return;
-      if(!part.user) return;
-      if(!part.user.permissions.hasPermission("rooms.seeInvisibleRooms") && !this.config.settings.visible && z.channel._id != this._id) return;
+      if (!part) return;
+      if (!part.user) return;
+      if (
+        !part.user.permissions.hasPermission("rooms.seeInvisibleRooms") &&
+        !this.config.settings.visible && z.channel._id != this._id
+      ) return;
       z.sendArray({
         m: "ls",
         c: false,
@@ -312,7 +326,7 @@ export default class Channel {
   chown(id: string | undefined = undefined) {
     if (id) {
       let part = [...this.participants.values()].find((z) => z.pID == id);
-      if(!part) return;
+      if (!part) return;
       this.config.crown = {
         participantId: part.pID,
         userId: part._id,
@@ -488,8 +502,8 @@ export default class Channel {
   }
   toJson(p: Participiant) {
     let ppl = [...this.participants.values()].map((z) => {
-      if(p) {
-        if(!p.user.permissions.hasPermission("vanish") && z.user.vanished) {
+      if (p) {
+        if (!p.user.permissions.hasPermission("vanish") && z.user.vanished) {
           return;
         }
       }
@@ -501,7 +515,7 @@ export default class Channel {
         tag: z.user.permissions.getTag(),
         x: z.x,
         y: z.y,
-        vanished: z.user.vanished
+        vanished: z.user.vanished,
       };
     }).filter(Boolean);
 
@@ -522,7 +536,7 @@ export default class Channel {
         id: this._id,
         count: ppl.length,
         crown: this.config.crown,
-        banned: p ? this.kickbans.has(p._id) : false
+        banned: p ? this.kickbans.has(p._id) : false,
       },
       ppl,
     };

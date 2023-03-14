@@ -74,7 +74,7 @@ export default class Client {
     Server.listeners.delete(this);
     Server.customListeners.delete(this);
 
-    if(this.ws.readyState == 1) this.ws.close(3000, "client destroyed");
+    if (this.ws.readyState == 1) this.ws.close(3000, "client destroyed");
 
     this.ws = null;
     this.ip = null;

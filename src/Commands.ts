@@ -16,11 +16,11 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     ch.dmAsServer(part, "MUHE TIME!!!!");
   }
 
-  if(command == "~heap") {
-    (async ()=>{
+  if (command == "~heap") {
+    (async () => {
       const snapshot = generateHeapSnapshot();
-      await Bun.write("heap"+Date.now()+".json", JSON.stringify(snapshot));
-      ch.messageAsServer("heap snapshot saved.")
+      await Bun.write("heap" + Date.now() + ".json", JSON.stringify(snapshot));
+      ch.messageAsServer("heap snapshot saved.");
     })();
   }
   if (command == "~id") {
@@ -106,16 +106,18 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     }
     if (!args[0] || !args[1]) {
       ch.dmAsServer(part, "This command removes a rank from a user!");
-      ch.dmAsServer(part, "Usage: ~delrank " + part._id + " owner")
+      ch.dmAsServer(part, "Usage: ~delrank " + part._id + " owner");
       return;
     }
 
-    let channelUserIsIn = [...Server.channels].find(z => z[1].participants.has(args[0]))?.[1];
+    let channelUserIsIn = [...Server.channels].find((z) =>
+      z[1].participants.has(args[0])
+    )?.[1];
     let user = channelUserIsIn?.participants?.get(args[0])?.user;
 
     if (!user) {
       let tempUser = User.userExists(args[0]);
-      if(tempUser.length != 0) {
+      if (tempUser.length != 0) {
         user = new User(tempUser[0]._id);
       }
     }
@@ -125,15 +127,23 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       return;
     }
 
-    if(!rankDefinitions[args[1]]) {
-      ch.dmAsServer(part, `Rank does not exist. Available ranks: ${Object.keys(rankDefinitions).join(", ")}`);
+    if (!rankDefinitions[args[1]]) {
+      ch.dmAsServer(
+        part,
+        `Rank does not exist. Available ranks: ${
+          Object.keys(rankDefinitions).join(", ")
+        }`,
+      );
       return;
     }
 
     user.ranks.delete(args[1]);
     user.commit();
 
-    ch.dmAsServer(part, "Removed user's `" + user.name + "` rank: `" + args[1] + "`!")
+    ch.dmAsServer(
+      part,
+      "Removed user's `" + user.name + "` rank: `" + args[1] + "`!",
+    );
   }
 
   if (command == "~addrank") {
@@ -143,11 +153,13 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     }
     if (!args[0] || !args[1]) {
       ch.dmAsServer(part, "This command adds a rank to a user!");
-      ch.dmAsServer(part, "Usage: ~addrank " + part._id + " owner")
+      ch.dmAsServer(part, "Usage: ~addrank " + part._id + " owner");
       return;
     }
 
-    let channelUserIsIn = [...Server.channels].find(z => z[1].participants.has(args[0]))?.[1];
+    let channelUserIsIn = [...Server.channels].find((z) =>
+      z[1].participants.has(args[0])
+    )?.[1];
     let user = channelUserIsIn?.participants?.get(args[0])?.user;
 
     // EXPLANATION:
@@ -159,7 +171,7 @@ export default function parseCommand(ws: UniverseWS, message: string) {
 
     if (!user) {
       let tempUser = User.userExists(args[0]);
-      if(tempUser.length != 0) {
+      if (tempUser.length != 0) {
         user = new User(tempUser[0]._id);
       }
     }
@@ -169,15 +181,23 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       return;
     }
 
-    if(!rankDefinitions[args[1]]) {
-      ch.dmAsServer(part, `Rank does not exist. Available ranks: ${Object.keys(rankDefinitions).join(", ")}`);
+    if (!rankDefinitions[args[1]]) {
+      ch.dmAsServer(
+        part,
+        `Rank does not exist. Available ranks: ${
+          Object.keys(rankDefinitions).join(", ")
+        }`,
+      );
       return;
     }
 
     user.ranks.add(args[1]);
     user.commit();
 
-    ch.dmAsServer(part, "Granted user `" + user.name + "` rank: `" + args[1] + "`!")
+    ch.dmAsServer(
+      part,
+      "Granted user `" + user.name + "` rank: `" + args[1] + "`!",
+    );
   }
 
   if (command == "~ranks") {
@@ -210,16 +230,18 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     }
     if (!args[0] || !args[1]) {
       ch.dmAsServer(part, "This command adds permissions to a user!");
-      ch.dmAsServer(part, "Usage: ~addperm " + part._id + " quota.bypass.note")
+      ch.dmAsServer(part, "Usage: ~addperm " + part._id + " quota.bypass.note");
       return;
     }
 
-    let channelUserIsIn = [...Server.channels].find(z => z[1].participants.has(args[0]))?.[1];
+    let channelUserIsIn = [...Server.channels].find((z) =>
+      z[1].participants.has(args[0])
+    )?.[1];
     let user = channelUserIsIn?.participants?.get(args[0])?.user;
 
     if (!user) {
       let tempUser = User.userExists(args[0]);
-      if(tempUser.length != 0) {
+      if (tempUser.length != 0) {
         user = new User(tempUser[0]._id);
       }
     }
@@ -229,14 +251,20 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       return;
     }
 
-    if(!user.permissions.isValidPermission(args[1])) {
-      ch.dmAsServer(part, "Invalid permission. View the readme to get a list of permissions.")
+    if (!user.permissions.isValidPermission(args[1])) {
+      ch.dmAsServer(
+        part,
+        "Invalid permission. View the readme to get a list of permissions.",
+      );
       return;
     }
 
     user.permissions.addPermission(args[1]);
 
-    ch.dmAsServer(part, "Adder user's `" + user.name + "` permission: `" + args[1] + "`!")
+    ch.dmAsServer(
+      part,
+      "Adder user's `" + user.name + "` permission: `" + args[1] + "`!",
+    );
   }
 
   if (command == "~delperm") {
@@ -246,16 +274,18 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     }
     if (!args[0] || !args[1]) {
       ch.dmAsServer(part, "This command removes a permission from a user!");
-      ch.dmAsServer(part, "Usage: ~delperm " + part._id + " quota.bypass.note")
+      ch.dmAsServer(part, "Usage: ~delperm " + part._id + " quota.bypass.note");
       return;
     }
 
-    let channelUserIsIn = [...Server.channels].find(z => z[1].participants.has(args[0]))?.[1];
+    let channelUserIsIn = [...Server.channels].find((z) =>
+      z[1].participants.has(args[0])
+    )?.[1];
     let user = channelUserIsIn?.participants?.get(args[0])?.user;
 
     if (!user) {
       let tempUser = User.userExists(args[0]);
-      if(tempUser.length != 0) {
+      if (tempUser.length != 0) {
         user = new User(tempUser[0]._id);
       }
     }
@@ -267,7 +297,10 @@ export default function parseCommand(ws: UniverseWS, message: string) {
 
     user.permissions.deletePermission(args[1]);
 
-    ch.dmAsServer(part, "Removed user's `" + user.name + "` permission: `" + args[1] + "`!")
+    ch.dmAsServer(
+      part,
+      "Removed user's `" + user.name + "` permission: `" + args[1] + "`!",
+    );
   }
 
   if (command == "~settag") {
@@ -279,26 +312,37 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       let example = rankDefinitions["owner"].tag;
 
       ch.dmAsServer(part, "This command adds a tag to a user!");
-      ch.dmAsServer(part, "Usage: ~settag " + part._id + " " + example.text + " " + example.color);
+      ch.dmAsServer(
+        part,
+        "Usage: ~settag " + part._id + " " + example.text + " " + example.color,
+      );
       return;
     }
 
-    if(!(args[1].length < 50 && args[1].length > 1)) {
-      ch.dmAsServer(part, "Tag name has to be at least 1 character, maximum 50 characters.")
+    if (!(args[1].length < 50 && args[1].length > 1)) {
+      ch.dmAsServer(
+        part,
+        "Tag name has to be at least 1 character, maximum 50 characters.",
+      );
       return;
     }
 
-    if(!verifyColor(args[2])) {
-      ch.dmAsServer(part, "Invalid color. Run the command without any arguments to see the value.")
+    if (!verifyColor(args[2])) {
+      ch.dmAsServer(
+        part,
+        "Invalid color. Run the command without any arguments to see the value.",
+      );
       return;
     }
 
-    let channelUserIsIn = [...Server.channels].find(z => z[1].participants.has(args[0]))?.[1];
+    let channelUserIsIn = [...Server.channels].find((z) =>
+      z[1].participants.has(args[0])
+    )?.[1];
     let user = channelUserIsIn?.participants?.get(args[0])?.user;
 
     if (!user) {
       let tempUser = User.userExists(args[0]);
-      if(tempUser.length != 0) {
+      if (tempUser.length != 0) {
         user = new User(tempUser[0]._id);
       }
     }
@@ -308,10 +352,12 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       return;
     }
 
-
     user.permissions.setTag(args[1].replaceAll("_", " "), args[2]);
 
-    ch.dmAsServer(part, "Set " + user.name + " tag to `" + args[1] + "` (`"+args[2]+"`)!")
+    ch.dmAsServer(
+      part,
+      "Set " + user.name + " tag to `" + args[1] + "` (`" + args[2] + "`)!",
+    );
   }
 
   if (command == "~deltag") {
@@ -324,12 +370,14 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       return;
     }
 
-    let channelUserIsIn = [...Server.channels].find(z => z[1].participants.has(args[0]))?.[1];
+    let channelUserIsIn = [...Server.channels].find((z) =>
+      z[1].participants.has(args[0])
+    )?.[1];
     let user = channelUserIsIn?.participants?.get(args[0])?.user;
 
     if (!user) {
       let tempUser = User.userExists(args[0]);
-      if(tempUser.length != 0) {
+      if (tempUser.length != 0) {
         user = new User(tempUser[0]._id);
       }
     }
@@ -341,6 +389,10 @@ export default function parseCommand(ws: UniverseWS, message: string) {
 
     user.permissions.deleteTag();
 
-    ch.dmAsServer(part, "Removed user's `" + user.name + "` tag.")
+    ch.dmAsServer(part, "Removed user's `" + user.name + "` tag.");
   }
+
+  command = null;
+  args = null;
+  message = null;
 }
