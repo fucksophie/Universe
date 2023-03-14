@@ -106,7 +106,7 @@ export default class User extends EventEmitter {
 
   commit() {
     if (User.userExists(this._id).length !== 0) {
-      db.query(
+      let qq = db.query(
         `UPDATE users
             SET color = ?, name = ?, tag = ?, permissions = ?, token = ?, ranks = ?
             WHERE _id = ?;`,
@@ -119,8 +119,9 @@ export default class User extends EventEmitter {
         JSON.stringify([...this.ranks]),
         this._id,
       );
+      qq = null;
     } else {
-      db.query(`INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?);`).all(
+      let qq = db.query(`INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?);`).all(
         this._id,
         this.color,
         this.name,
@@ -129,6 +130,8 @@ export default class User extends EventEmitter {
         this.token,
         JSON.stringify([...this.ranks]),
       );
+      qq = null;
+
     }
 
     this.emit("update");
