@@ -107,7 +107,7 @@ export default class Participiant {
   destroy() {
     this.user.removeListener("update", this.updateListener);
     Object.values(this.quotas).map((z) => z.destroy());
-    if (!Server.clients.find((z) => z.getID() == this._id)) {
+    if (!Server.clients.find((z) => z._id == this._id)) {
       Server.users.delete(this.user._id);
     }
 

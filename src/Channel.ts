@@ -186,8 +186,8 @@ export default class Channel {
     if (
       this.participants.size >= this.config.settings.limit &&
       this._id != "test/awkward" &&
-      c.getID() !== this.config.crown?.userId &&
-      !new User(c.getID()).permissions.hasPermission("rooms.bypassLimit")
+      c._id !== this.config.crown?.userId &&
+      !new User(c._id).permissions.hasPermission("rooms.bypassLimit")
     ) {
       const ch = Server.getChannel("test/awkward");
       ch.addClient(c);
@@ -195,12 +195,12 @@ export default class Channel {
       return;
     }
 
-    if (this.kickbans.has(c.getID()) && this._id != "test/awkawrd") {
-      let ban = this.kickbans.get(c.getID());
+    if (this.kickbans.has(c._id) && this._id != "test/awkawrd") {
+      let ban = this.kickbans.get(c._id);
       let time = ban.creation - (Date.now() - ban.duration);
 
       if (time <= 0) {
-        this.kickbans.delete(c.getID());
+        this.kickbans.delete(c._id);
       } else {
         const ch = Server.getChannel("test/awkward");
         ch.addClient(c);
@@ -213,22 +213,22 @@ export default class Channel {
       }
     }
 
-    let part = this.participants.get(c.getID());
+    let part = this.participants.get(c._id);
 
     if (part) {
       part.clients.push(c);
 
       part.channel = this._id;
     } else {
-      part = new Participiant(c.getID(), this._id);
+      part = new Participiant(c._id, this._id);
       part.channel = this._id;
       part.clients.push(c);
-      this.participants.set(c.getID(), part);
+      this.participants.set(c._id, part);
 
       let json = part.toJson();
 
       for (const [_, z] of this.participants) {
-        if (z._id == c.getID()) continue;
+        if (z._id == c._id) continue;
         if (part.user.vanished && !z.user.permissions.hasPermission("vanish")) {
           continue;
         }
@@ -238,7 +238,7 @@ export default class Channel {
     }
     if (
       this.participants.size == 1 &&
-        !Channel.isLobby(this._id) || this.config.crown?.userId == c.getID()
+        !Channel.isLobby(this._id) || this.config.crown?.userId == c._id
     ) { // user just joined this room or the crown owner is the user, and it's not a lobby, add to user
       part.updateQuotaFlags(2);
 
@@ -300,7 +300,7 @@ export default class Channel {
 
   updateListeners() {
     Server.listeners.forEach((z) => {
-      let part = z.channel.getPart(z);
+      let part = z.channel.participants.get(z._id);
       if (!part) return;
       if (!part.user) return;
       if (
@@ -372,7 +372,7 @@ export default class Channel {
   }
 
   sendChatHistory(c: Client) {
-    let iCanSeeDms = c.channel.getPart(c).user.permissions.hasPermission(
+    let iCanSeeDms = c.channel.participants.get(c._id).user.permissions.hasPermission(
       "rooms.seeDms",
     );
     let personalizedChatHistory = [];
@@ -382,7 +382,7 @@ export default class Channel {
         personalizedChatHistory.push(m);
       } else {
         if (
-          m.recipient._id == c.getID() || m.sender._id == c.getID() ||
+          m.recipient._id == c._id || m.sender._id == c._id ||
           iCanSeeDms
         ) {
           personalizedChatHistory.push(m);
@@ -543,7 +543,7 @@ export default class Channel {
   }
 
   removeClient(c: Client) {
-    let part = this.participants.get(c.getID());
+    let part = this.participants.get(c._id);
     if (!part) return;
 
     part.clients = part.clients.filter((z) => z.ws !== c.ws);
@@ -555,7 +555,7 @@ export default class Channel {
       });
 
       part.destroy();
-      this.participants.delete(c.getID());
+      this.participants.delete(c._id);
 
       if (this.config.crown) {
         if (
@@ -567,10 +567,6 @@ export default class Channel {
     }
 
     this.updateListeners();
-  }
-
-  getPart(c: Client): Participiant | undefined {
-    return this.participants.get(c.getID());
   }
 
   static isLobby(_id) {

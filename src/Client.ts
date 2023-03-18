@@ -7,7 +7,7 @@ import User from "./User";
 export default class Client {
   ws: UniverseWS;
   private ip: string;
-  id: string;
+  _id: string;
   private buffer: any[] = []; // thanks Lapis for the idea!
   private bufferTick: Timer;
   channel: Channel;
@@ -15,12 +15,12 @@ export default class Client {
 
   initQuotas() { // TODO: afaik the only drawback from making new users here is the fact that they won't update automatically
     this.quotas = {
-      channelChange: new Quota(new User(this.getID()), "channelChange", [{
+      channelChange: new Quota(new User(this._id), "channelChange", [{
         allowance: 1,
         max: 10,
         interval: 2e3,
       }]),
-      userset: new Quota(new User(this.getID()), "userset", [{
+      userset: new Quota(new User(this._id), "userset", [{
         allowance: 1,
         max: 30,
         interval: 18e5,
@@ -37,7 +37,7 @@ export default class Client {
   constructor(ws: UniverseWS, ip: string) {
     this.ws = ws;
     this.ip = ip;
-    this.id = Hashing.idHashing(this.ip);
+    this._id = Hashing.idHashing(this.ip);
     this.bufferTick = setInterval(() => {
       if (this.buffer.length != 0) {
         this.ws.send(JSON.stringify(this.buffer));
@@ -78,7 +78,7 @@ export default class Client {
 
     this.ws = null;
     this.ip = null;
-    this.id = null;
+    this._id = null;
     this.bufferTick = null;
     this.buffer = null;
     this.quotas = null;
@@ -87,9 +87,5 @@ export default class Client {
   sendArray(a: any) {
     if (!this.ws) return;
     this.buffer.push(a);
-  }
-
-  getID() {
-    return this.id;
   }
 }

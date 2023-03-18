@@ -23,7 +23,7 @@ for (const file of await readdir("src/commands")) {
 
 export default function parseCommand(ws: UniverseWS, message: string) {
   let ch = ws.client.channel;
-  let part = ch.getPart(ws.client);
+  let part = ch.participants.get(ws.client._id);
 
   let args = message.split(" ").map((z) => z.trim().replaceAll("  ", " "));
   let command = args.shift();

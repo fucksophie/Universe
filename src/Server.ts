@@ -237,7 +237,7 @@ export default class Server {
 
         if (data.token) {
           let dd = User.getToken(data.token);
-          if (dd.length != 0) ws.client.id = dd[0]._id;
+          if (dd.length != 0) ws.client._id = dd[0]._id;
         }
 
         // EXPLANATION:
@@ -249,7 +249,7 @@ export default class Server {
         // then the third one will get the second one's quotas (still the first ones!)
 
         let sameIDUser = Server.clients.find((z) =>
-          z.getID() == ws.client.getID() && z.ws != ws
+          z._id == ws.client._id && z.ws != ws
         );
 
         if (sameIDUser) {
@@ -258,7 +258,7 @@ export default class Server {
           ws.client.initQuotas();
         }
 
-        let user = new User(ws.client.getID());
+        let user = new User(ws.client._id);
 
         ws.client.sendArray({
           m: "hi",
@@ -279,7 +279,7 @@ export default class Server {
 
         let ch = ws.client.channel;
         if (!ch) return;
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
         if (!part) return;
 
         if (typeof data.vanish != "boolean") return;
@@ -288,7 +288,7 @@ export default class Server {
           ch.broadcastToChannel({
             m: "bye",
             p: part.pID,
-          }, ws.client.getID());
+          }, ws.client._id);
         }
 
         part.user.vanished = data.vanish;
@@ -319,13 +319,13 @@ export default class Server {
         if (!ch) return;
 
         if (
-          !ch.getPart(ws.client).user.permissions.hasPermission(
+          !ch.participants.get(ws.client._id).user.permissions.hasPermission(
             "rooms.chsetAnywhere",
           )
         ) {
           if (!ch.config.crown) return;
           if (
-            ch.config.crown.userId !== ws.client.getID() || ch.crownOnGround
+            ch.config.crown.userId !== ws.client._id || ch.crownOnGround
           ) {
             return;
           }
@@ -341,7 +341,7 @@ export default class Server {
 
         let ch = ws.client.channel;
         if (!ch) return;
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
         if (!part) return;
 
         if (part.user.permissions.hasPermission("rooms.chownAnywhere")) {
@@ -355,7 +355,7 @@ export default class Server {
         // if have, we check if we aren't the previous owner, and then pick up the crown if
         // available
         if (
-          ch.config.crown.userId !== ws.client.getID() &&
+          ch.config.crown.userId !== ws.client._id &&
           (Date.now() - ch.config.crown.time) > 15000
         ) {
           ws.client.updateQuotaFlags(2);
@@ -366,7 +366,7 @@ export default class Server {
 
         // EXPLANATION: if we dropped a crown, we can pick it back up with this
         if (
-          ch.config.crown.userId == ws.client.getID() && data.id == part.pID &&
+          ch.config.crown.userId == ws.client._id && data.id == part.pID &&
           ch.crownOnGround
         ) {
           ws.client.updateQuotaFlags(2);
@@ -380,8 +380,8 @@ export default class Server {
           // if so, we give the crown to the person we specified
 
           if (
-            data.id !== ws.client.getID() &&
-            ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround
+            data.id !== ws.client._id &&
+            ch.config.crown.userId == ws.client._id && !ch.crownOnGround
           ) {
             ws.client.updateQuotaFlags(0);
             ch.chown(data.id);
@@ -393,7 +393,7 @@ export default class Server {
           // if we actually own the crown.
 
           if (
-            ch.config.crown.userId == ws.client.getID() && !ch.crownOnGround
+            ch.config.crown.userId == ws.client._id && !ch.crownOnGround
           ) {
             ws.client.updateQuotaFlags(0);
             ch.chown();
@@ -410,8 +410,7 @@ export default class Server {
         if (!verifyNumber(data?.x) || !verifyNumber(data?.y)) return;
 
         if (ws.client.channel) {
-          let part = ws.client.channel.getPart(ws.client);
-
+          let part = ws.client.channel.participants.get(ws.client._id);
           if (!part) return;
 
           if (!part.quotas.mouseMove.isAvailable()) return;
@@ -424,7 +423,7 @@ export default class Server {
         if (!data.name) return;
 
         const ch = ws.client.channel;
-        const part = ch.getPart(ws.client);
+        const part = ch.participants.get(ws.client._id);
         if (!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
         let otherUser = ch.participants.get(data._id);
         if (!otherUser) return;
@@ -439,7 +438,7 @@ export default class Server {
         if (!data.color) return;
 
         const ch = ws.client.channel;
-        const part = ch.getPart(ws.client);
+        const part = ch.participants.get(ws.client._id);
         if (!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
         let otherUser = ch.participants.get(data._id);
         if (!otherUser) return;
@@ -452,7 +451,7 @@ export default class Server {
         if (!data._id) return;
 
         const ch = ws.client.channel;
-        const part = ch.getPart(ws.client);
+        const part = ch.participants.get(ws.client._id);
 
         if (!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
           if (ch.crownOnGround) return;
@@ -478,7 +477,7 @@ export default class Server {
 
       if (data.m == "clearchat") {
         const ch = ws.client.channel;
-        const part = ch.getPart(ws.client);
+        const part = ch.participants.get(ws.client._id);
         if (!part.user.permissions.hasPermission("rooms.clearChat")) return;
 
         ch.chatHistory = [];
@@ -498,7 +497,7 @@ export default class Server {
 
         let otherUser = ch.participants.get(data._id);
         if (!otherUser) return;
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
         if (!part.quotas.dm.isAvailable()) return;
 
         ch.dm(part, otherUser, data.message);
@@ -511,7 +510,7 @@ export default class Server {
         if (typeof data.message !== "string") return;
         if (data.message.length > 512) return;
 
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
         if (!part.quotas.chat.isAvailable()) return;
 
         ch.message(part, data.message);
@@ -526,7 +525,7 @@ export default class Server {
 
         if (
           ch.config.settings.crownsolo &&
-          ch.config.crown?.userId !== ws.client.getID()
+          ch.config.crown?.userId !== ws.client._id
         ) return;
 
         if (!Array.isArray(data.n)) return;
@@ -547,7 +546,7 @@ export default class Server {
 
         if (isBad) return;
 
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
 
         if (!part) return;
         if (!part.quotas.note.isAvailable(data.n.length)) return;
@@ -557,7 +556,7 @@ export default class Server {
           t: data.t,
           n: data.n,
           p: part.pID,
-        }, ws.client.getID());
+        }, ws.client._id);
       }
 
       if (data.m == "t") {
@@ -575,14 +574,14 @@ export default class Server {
 
         if (!ch) return;
 
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
 
         if (!part) return;
 
         if (!Server.listeners.has(ws.client)) {
           Server.listeners.add(ws.client);
           let json = [...Server.channels.values()].map((z) =>
-            z.toJson(ws.client.channel.getPart(ws.client)).ch
+            z.toJson(ws.client.channel.participants.get(ws.client._id)).ch
           );
 
           if (!part.user.permissions.hasPermission("rooms.seeInvisibleRooms")) {
@@ -612,7 +611,7 @@ export default class Server {
         if (!data.target.global) global = false;
         else global = true;
 
-        let part = ch.getPart(ws.client);
+        let part = ch.participants.get(ws.client._id);
 
         let param = {
           "m": "custom",
@@ -715,7 +714,7 @@ export default class Server {
 
         if (!ws.client.channel) return;
 
-        let part = ws.client.channel.getPart(ws.client);
+        let part = ws.client.channel.participants.get(ws.client._id);
 
         let user = part.user;
 
@@ -765,7 +764,7 @@ export default class Server {
           ws.antibot = new Antibot();
 
           Server.clients.push(ws.client);
-          Server.logger.info(`User ${ip}/${ws.client.getID()} connected.`);
+          Server.logger.info(`User ${ip}/${ws.client._id} connected.`);
 
           let code = ws.antibot.generateCode();
           if (Math.random() > .5) code = "~" + code;
