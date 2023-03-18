@@ -162,8 +162,6 @@ function validateSet(
   return set;
 }
 
-import { generateHeapSnapshot } from "bun";
-import { buf2hex } from "./Hashing";
 import parseCommand from "./Commands";
 
 export default class Server {
@@ -747,7 +745,9 @@ export default class Server {
 
     let server = Bun.serve({
       websocket: {
-        message: Server.requestHandler,
+        message: async (ws: UniverseWS, message) => {
+          await Server.requestHandler(ws, message);
+        },
         maxPayloadLength: 16384,
         open(ws: UniverseWS) {
           let ip = "";
