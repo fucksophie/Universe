@@ -173,6 +173,7 @@ export default class Server {
 
   static listeners = new Set<Client>();
   static customListeners = new Set<Client>();
+  static messageCount = 0;
 
   constructor() {
     setInterval(async () => { // TODO: shitty workaround for a memoryleak somewhere idk (or maybe shitty bun gc?? ja neznaju)
@@ -185,8 +186,9 @@ export default class Server {
         gcStart - gcEnd,
         "objects. Current object count:",
         gcEnd,
+        "Message count:", Server.messageCount
       ]);
-
+      Server.messageCount = 0;
       gcEnd = null;
       gcStart = null;
     }, 15000);
@@ -228,7 +230,7 @@ export default class Server {
         }, 120);
         return;
       }
-
+      Server.messageCount++;
       if (data.m == "hi") {
         if (ws.hiSent) return;
         ws.hiSent = true;
