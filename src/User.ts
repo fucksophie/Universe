@@ -131,7 +131,6 @@ export default class User extends EventEmitter {
         JSON.stringify([...this.ranks]),
       );
       qq = null;
-
     }
 
     this.emit("update");

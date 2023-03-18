@@ -751,18 +751,18 @@ export default class Server {
         maxPayloadLength: 16384,
         open(ws: UniverseWS) {
           let ip = "";
+
           if (ws.data) {
             ip = ws.data;
           } else {
-            let sh = new Bun.SHA512_256();
-            sh.update(ws.remoteAddress);
-            ip = buf2hex(sh.digest());
+            ip = ws.remoteAddress;
           }
 
           ws.client = new Client(ws, ip);
           ws.antibot = new Antibot();
 
           Server.clients.push(ws.client);
+          Server.logger.info(`User ${ip}/${ws.client.getID()} connected.`);
 
           let code = ws.antibot.generateCode();
           if (Math.random() > .5) code = "~" + code;
