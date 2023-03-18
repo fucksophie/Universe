@@ -415,6 +415,8 @@ export default class Server {
 
           if (!part.quotas.mouseMove.isAvailable()) return;
           ws.client.channel.moveMouse(part, +data.x, +data.y);
+          data.y = null;
+          data.x = null;
         }
       }
 

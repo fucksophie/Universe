@@ -1,3 +1,4 @@
+import { execArgv } from "process";
 import Client from "./Client";
 import { Logger } from "./Logger";
 import Participiant from "./Participiant";
@@ -322,7 +323,9 @@ export default class Channel {
 
       z.clients.forEach((b) => b.sendArray(message));
     });
+    message = null;
   }
+
   chown(id: string | undefined = undefined) {
     if (id) {
       let part = [...this.participants.values()].find((z) => z.pID == id);
