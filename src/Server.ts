@@ -747,6 +747,7 @@ export default class Server {
       websocket: {
         message: async (ws: UniverseWS, message) => {
           await Server.requestHandler(ws, message);
+          message = null;
         },
         maxPayloadLength: 16384,
         open(ws: UniverseWS) {
