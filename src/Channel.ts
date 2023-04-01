@@ -375,9 +375,10 @@ export default class Channel {
   }
 
   sendChatHistory(c: Client) {
-    let iCanSeeDms = c.channel.participants.get(c._id).user.permissions.hasPermission(
-      "rooms.seeDms",
-    );
+    let iCanSeeDms = c.channel.participants.get(c._id).user.permissions
+      .hasPermission(
+        "rooms.seeDms",
+      );
     let personalizedChatHistory = [];
 
     for (const m of this.chatHistory) {

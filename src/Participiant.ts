@@ -3,6 +3,11 @@ import Quota from "./Quotas";
 import Server from "./Server";
 import User from "./User";
 
+type QuotaObject = Record<
+  "mouseMove" | "chown" | "chat" | "dm" | "kickban" | "note",
+  Quota
+>;
+
 export default class Participiant {
   pID: string;
   _id: string;
@@ -12,7 +17,7 @@ export default class Participiant {
   x = 0;
   y = 0;
 
-  quotas: Record<string, Quota> = {};
+  quotas: QuotaObject = {} as QuotaObject;
 
   private updateListener: (...args: any[]) => void;
 
@@ -86,7 +91,7 @@ export default class Participiant {
       dm: new Quota(this.user, "dm", [
         { allowance: 5, max: 5, interval: 6e3 },
       ]),
-      kickban: new Quota(this.user, "kickban", [{ // TODO: kickbanning is not implemented
+      kickban: new Quota(this.user, "kickban", [{
         allowance: 1,
         max: 2,
         interval: 1000,

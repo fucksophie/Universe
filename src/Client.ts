@@ -4,6 +4,8 @@ import Quota from "./Quotas";
 import Server, { UniverseWS } from "./Server";
 import User from "./User";
 
+type QuotaObject = Record<"channelChange" | "userset", Quota>;
+
 export default class Client {
   ws: UniverseWS;
   private ip: string;
@@ -11,7 +13,7 @@ export default class Client {
   private buffer: any[] = []; // thanks Lapis for the idea!
   private bufferTick: Timer;
   channel: Channel;
-  quotas: Record<string, Quota> = {};
+  quotas: QuotaObject = {} as QuotaObject;
 
   initQuotas() { // TODO: afaik the only drawback from making new users here is the fact that they won't update automatically
     this.quotas = {

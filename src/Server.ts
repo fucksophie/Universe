@@ -1,8 +1,6 @@
 /*
   code sponsored by
    https://141.lv
-  and https://lu.lv
-
          _____
      _  |___ /
     (_)   |_ \
@@ -186,7 +184,8 @@ export default class Server {
         gcStart - gcEnd,
         "objects. Current object count:",
         gcEnd,
-        "Message count:", Server.messageCount
+        "Message count:",
+        Server.messageCount,
       ]);
       Server.messageCount = 0;
       gcEnd = null;
