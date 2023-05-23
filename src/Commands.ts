@@ -44,14 +44,7 @@ export default function parseCommand(ws: UniverseWS, message: string) {
     }
   }
   let parts = cmd.usage.split(" ");
-  console.log(parts);
-  let oneMatchedFalsly = !(parts[0] == "");
-  if (parts[0] !== "") {
-    for (let i in parts) {
-      if (!args[+i]) oneMatchedFalsly = true;
-    }
-  }
-  if (oneMatchedFalsly) {
+  if (!(args.length >= parts.length)) {
     ch.dmAsServer(part, cmd.description);
     ch.dmAsServer(part, "Usage: ~" + cmd.name + " " + cmd.usage);
     return;
