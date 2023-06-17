@@ -188,8 +188,6 @@ export default class Server {
         Server.messageCount,
       ]);
       Server.messageCount = 0;
-      gcEnd = null;
-      gcStart = null;
     }, 15000);
   }
 
@@ -414,8 +412,6 @@ export default class Server {
 
           if (!part.quotas.mouseMove.isAvailable()) return;
           ws.client.channel.moveMouse(part, +data.x, +data.y);
-          data.y = null;
-          data.x = null;
         }
       }
 
@@ -736,10 +732,7 @@ export default class Server {
 
         user.commit();
       }
-
-      data = null;
     });
-    hh = null;
   }
 
   async start() {
@@ -749,7 +742,6 @@ export default class Server {
       websocket: {
         message: async (ws: UniverseWS, message) => {
           await Server.requestHandler(ws, message);
-          message = null;
         },
         maxPayloadLength: 16384,
         open(ws: UniverseWS) {
@@ -781,8 +773,6 @@ export default class Server {
 
           if (ch) ch.removeClient(ws.client);
           if (ws.client) ws.client.destroy();
-
-          ws = null;
         },
       },
       fetch(req, server) {

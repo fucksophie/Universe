@@ -68,15 +68,6 @@ export default class Quota extends EventEmitter {
 
   destroy() {
     clearInterval(this.interval as unknown as number);
-
-    this.values = null;
-    this.name = null;
-    this.selected = null;
-    this.force = null;
-    this.interval = null;
-    this.points = null;
-    this.user = null;
-    this.bypassed = null;
   }
 
   updateFlags(n: number) {

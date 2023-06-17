@@ -115,15 +115,5 @@ export default class Participiant {
     if (!Server.clients.find((z) => z._id == this._id)) {
       Server.users.delete(this.user._id);
     }
-
-    this.pID = null;
-    this._id = null;
-    this.clients = null;
-    this.channel = null;
-    this.user = null;
-    this.x = null;
-    this.y = null;
-    this.updateListener = null;
-    this.quotas = null;
   }
 }

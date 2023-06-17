@@ -141,7 +141,11 @@ export default class Channel {
     this.config = config;
 
     if (!this.config) this.config = getDefaultConfig();
-    this.config.settings.lobby = Channel.isLobby(this._id);
+    let lobby = Channel.isLobby(this._id);
+    if(lobby) {
+      this.config = getDefaultConfig();
+      this.config.settings.lobby = true;
+    }
     this.crownOnGround = false;
   }
 
@@ -277,12 +281,6 @@ export default class Channel {
     });
 
     Server.channels.delete(this._id);
-
-    this.participants = null;
-    this.config = null;
-    this.logger = null;
-    this._id = null;
-    this.chatHistory = null;
   }
 
   updateChannel() {
@@ -323,7 +321,6 @@ export default class Channel {
 
       z.clients.forEach((b) => b.sendArray(message));
     });
-    message = null;
   }
 
   chown(id: string | undefined = undefined) {

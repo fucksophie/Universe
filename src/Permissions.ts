@@ -166,7 +166,7 @@ export class Permissions {
     // the splitting and slice part would turn our `quota.bypass.hi` to
     // ["quota", "bypass"], then we would join together and add a .*
     // "quota.bypass.*" BOOOOOOM!!!!!!! WOWAWAH! Now we can compare with the user's permisions
-
+    
     if (this.getPermissions().has(parts.slice(0, -1).join(".") + ".*")) {
       return true;
     }

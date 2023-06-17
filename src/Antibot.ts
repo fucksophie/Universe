@@ -1,4 +1,7 @@
-import { obfuscate } from "javascript-obfuscator";
+// @ts-expect-error: Weird bun bug I can't bother fixing
+import pkg from "javascript-obfuscator";
+const {obfuscate} = pkg;
+
 import { UniverseWS } from "./Server";
 import User from "./User";
 

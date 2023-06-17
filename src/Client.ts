@@ -77,13 +77,6 @@ export default class Client {
     Server.customListeners.delete(this);
 
     if (this.ws.readyState == 1) this.ws.close(3000, "client destroyed");
-
-    this.ws = null;
-    this.ip = null;
-    this._id = null;
-    this.bufferTick = null;
-    this.buffer = null;
-    this.quotas = null;
   }
 
   sendArray(a: any) {
