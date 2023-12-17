@@ -1,11 +1,11 @@
-// @ts-expect-error: Weird bun bug I can't bother fixing
-import pkg from "javascript-obfuscator";
-const {obfuscate} = pkg;
-
+const { obfuscate } = require("javascript-obfuscator");
+import { Logger } from "./Logger";
 import { UniverseWS } from "./Server";
 import User from "./User";
 
 export class Antibot {
+  static logger = new Logger("Antibot");
+
   clientChecks = [
     ["MPP.client.isConnected()", "true"],
     ["MPP.client.isConnecting()", "false"],
@@ -77,8 +77,8 @@ export class Antibot {
         z.split("").map((z) => z.charCodeAt(0)).reduce((a, b) => a + b)
       ).reduce((a, b) => a + b);
 
-    if (solve !== code) {
-      console.log(
+      if (solve !== code) {
+      Antibot.logger.warning(
         "Antibot failed! Code:",
         code,
         "Needed:",

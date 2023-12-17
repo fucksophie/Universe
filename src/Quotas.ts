@@ -1,4 +1,4 @@
-import * as EventEmitter from "events";
+import { EventEmitter } from "node:events";
 import User from "./User";
 
 export default class Quota extends EventEmitter {
@@ -67,7 +67,7 @@ export default class Quota extends EventEmitter {
   }
 
   destroy() {
-    clearInterval(this.interval as unknown as number);
+    clearInterval(this.interval);
   }
 
   updateFlags(n: number) {

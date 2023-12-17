@@ -171,24 +171,8 @@ export default class Server {
 
   static listeners = new Set<Client>();
   static customListeners = new Set<Client>();
-  static messageCount = 0;
 
   constructor() {
-    setInterval(async () => { // TODO: shitty workaround for a memoryleak somewhere idk (or maybe shitty bun gc?? ja neznaju)
-      let gcStart = heapStats().objectCount;
-      Bun.gc(true);
-      let gcEnd = heapStats().objectCount;
-
-      Server.logger.info([
-        "GC. Freed:",
-        gcStart - gcEnd,
-        "objects. Current object count:",
-        gcEnd,
-        "Message count:",
-        Server.messageCount,
-      ]);
-      Server.messageCount = 0;
-    }, 15000);
   }
 
   static getChannel(
@@ -227,7 +211,7 @@ export default class Server {
         }, 120);
         return;
       }
-      Server.messageCount++;
+
       if (data.m == "hi") {
         if (ws.hiSent) return;
         ws.hiSent = true;

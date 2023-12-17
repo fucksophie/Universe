@@ -17,29 +17,30 @@ export class Logger {
       string = string.join(" ");
     }
 
+    if(typeof string == "object") string = JSON.stringify(string)
     return string;
   }
 
-  info(any: any) {
-    const string = this.a2s(any);
+  info(...any: any[]) {
+    const string = any.map(z => this.a2s(z)).join(" ");
 
     console.log("ℹ️  " + chalk.blue(this.name) + " " + string);
   }
 
-  error(any: any) {
-    const string = this.a2s(any);
+  error(...any: any[]) {
+    const string = any.map(z => this.a2s(z)).join(" ");
 
     console.log("🛑 " + chalk.red(this.name) + " " + string);
   }
 
-  success(any: any) {
-    const string = this.a2s(any);
+  success(...any: any[]) {
+    const string = any.map(z => this.a2s(z)).join(" ");
 
     console.log("✅ " + chalk.green(this.name) + " " + string);
   }
 
-  warning(any: any) {
-    const string = this.a2s(any);
+  warning(...any: any[]) {
+    const string = any.map(z => this.a2s(z)).join(" ");
 
     console.log("🚸 " + chalk.yellow(this.name) + " " + string);
   }

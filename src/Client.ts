@@ -41,6 +41,7 @@ export default class Client {
     this.ip = ip;
     this._id = Hashing.idHashing(this.ip);
     this.bufferTick = setInterval(() => {
+      if(!this.buffer) return;
       if (this.buffer.length != 0) {
         this.ws.send(JSON.stringify(this.buffer));
         this.buffer = [];
@@ -71,7 +72,7 @@ export default class Client {
   }
 
   destroy() {
-    clearInterval(this.bufferTick as unknown as number);
+    clearInterval(this.bufferTick);
     Object.values(this.quotas).map((z) => z.destroy());
     Server.listeners.delete(this);
     Server.customListeners.delete(this);
