@@ -750,6 +750,7 @@ export default class Server {
             m: "b",
             code,
           });
+          code = null;
         },
         close(ws: UniverseWS) {
           Server.clients = Server.clients.filter((z) => z.ws !== ws);

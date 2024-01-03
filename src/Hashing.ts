@@ -1,6 +1,6 @@
 import { SHA512_256 } from "bun";
 
-export function buf2hex(buffer: TypedArray) {
+export function buf2hex(buffer: Uint8Array) {
   return [...new Uint8Array(buffer)]
     .map((x) => x.toString(16).padStart(2, "0"))
     .join("");
@@ -18,6 +18,6 @@ export default class Hashing {
   static idHashing(ip: string) {
     let sh = new SHA512_256();
     sh.update(ip + hash);
-    return buf2hex(sh.digest()).slice(0, 24);
+    return buf2hex(sh.digest() as Uint8Array).slice(0, 24);
   }
 }
