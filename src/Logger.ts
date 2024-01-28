@@ -24,7 +24,7 @@ export class Logger {
   info(...any: any[]) {
     const string = any.map(z => this.a2s(z)).join(" ");
 
-    console.log("ℹ️  " + chalk.blue(this.name) + " " + string);
+    console.log("🛈  " + chalk.blue(this.name) + " " + string);
   }
 
   error(...any: any[]) {
