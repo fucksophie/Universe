@@ -107,6 +107,7 @@ let noteKeys = [
   "c7",
 ];
 
+
 export interface UniverseWS extends ServerWebSocket {
   client: Client;
   hiSent: boolean;
@@ -119,9 +120,10 @@ export function verifyColor(color = ""): boolean {
   return /^#(?:[0-9a-fA-F]{3}){1,2}$/gm.test(color);
 }
 
-function verifyNumber(number = ""): boolean {
+function verifyNumber(number: string|number = ""): boolean {
+  if (typeof number == "number") return true;
   if (!number) return false;
-  if (isNaN(+number)) return;
+  if (isNaN(+number)) return false;
   return true;
 }
 
@@ -159,6 +161,7 @@ function validateSet(
 }
 
 import parseCommand from "./Commands";
+import { Message } from "./MessageTypes";
 
 export default class Server {
   static logger = new Logger("Server");
@@ -189,7 +192,7 @@ export default class Server {
   static async requestHandler(ws: UniverseWS, raw: string | Uint8Array) {
     if (raw instanceof Uint8Array) return;
 
-    let hh;
+    let hh: Message[];
     try {
       hh = JSON.parse(raw);
     } catch {

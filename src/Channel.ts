@@ -34,7 +34,7 @@ function formatTime(t: number): string {
   return timeS;
 }
 
-interface ChannelSettings {
+export interface ChannelSettings {
   chat?: boolean;
   color?: string;
   color2?: string;
