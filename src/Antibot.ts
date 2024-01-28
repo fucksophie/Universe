@@ -12,16 +12,25 @@ export class Antibot {
     ["MPP.client.user", "undefined"],
     ["MPP.client.channel", "undefined"],
     ["MPP.client.connectionTime", "undefined"],
+    ["Object.keys(MPP.client.ppl).length", "0"],
+    ["MPP.client.preventsPlaying()", "false"],
+    ["MPP.client.participantId", "undefined"],
+    ["MPP.client.canConnect", "true"]
   ];
 
   checkSolves: string[] = [];
+  solves: string[][] = [];
 
   hash = Math.floor(Math.random() * 999);
 
   verifiedDevices = false;
 
   constructor() {
-    for (let i = 0; i < this.clientChecks.length; i++) {
+    for (let i = 0; i < 3; i++) {
+      this.solves.push(this.clientChecks[Math.floor(Math.random() * this.clientChecks.length)]);
+    }
+
+    for (let i = 0; i < this.solves.length; i++) {
       this.checkSolves.push(Math.floor(Math.random() * 999) + "");
     }
   }
@@ -48,7 +57,8 @@ export class Antibot {
   }
 
   generateCode() {
-    let clientChecksCode = this.clientChecks.map((z, i) => {
+
+    let clientChecksCode = this.solves.map((z, i) => {
       return `if(${z[0]} == ${z[1]}) parts.push("${this.checkSolves[i]}")`;
     });
 
@@ -86,7 +96,7 @@ export class Antibot {
         "Hash:",
         this.hash,
         "Solves:",
-        this.checkSolves,
+        this.solves,
       );
     }
     return solve == code;
