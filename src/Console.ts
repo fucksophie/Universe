@@ -31,11 +31,6 @@ async function sizes() {
 
 const { cols } = await sizes();
 
-let lines = rainbow(
-  (await Bun.file("other/ascii_lg.txt").text()).split("").length,
-  false,
-).map((z) => chalk.rgb(Math.floor(z.r), Math.floor(z.g), Math.floor(z.b)));
-
 export async function display() {
   let ascii = "";
   try {
@@ -47,6 +42,11 @@ export async function display() {
       ascii = await Bun.file("other/ascii_sm.txt").text();
     }
   } finally {
+    let lines = rainbow(
+      ascii.split("").length,
+      false,
+    ).map((z) => chalk.rgb(Math.floor(z.r), Math.floor(z.g), Math.floor(z.b)));
+    
     if (ascii) {
       ascii.split("\n").forEach((l, i) => {
         console.log(
