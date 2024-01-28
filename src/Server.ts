@@ -1,22 +1,20 @@
 /*
-  code sponsored by
-   https://141.lv
-         _____
-     _  |___ /
-    (_)   |_ \
-     _   ___) |
-    (_) |____/
-*/
+  https://yourfriend.lol 2023 - 2024 All Rights Reserved
+  This server was developed in a clean-room environment.
 
-// TODO: Implement global chat logging/flushing
+  Everlasting flame, see me aiming at your face
+  Hundred meter blade, put him back inside his grave
+  I was so afraid 'cause I couldn't feel the pain
+  Standing in the rain, I put silver in my chain
+  Snow landscapes, I see ice everywhere I go
+*/
 
 import { Logger } from "./Logger";
 import Channel, { ChannelConfiguration, getDefaultConfig } from "./Channel";
 import Client from "./Client";
 import User from "./User";
-import { gc, ServerWebSocket } from "bun";
+import { ServerWebSocket } from "bun";
 import { Antibot } from "./Antibot";
-import { heapStats, memoryUsage } from "bun:jsc";
 
 let noteKeys = [
   "a-1",
