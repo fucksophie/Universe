@@ -43,7 +43,10 @@ export default function parseCommand(ws: UniverseWS, message: string) {
       return;
     }
   }
+  
   let parts = cmd.usage.split(" ");
+  if(cmd.usage.length == 0) parts = [];
+
   if (!(args.length >= parts.length)) {
     ch.dmAsServer(part, cmd.description);
     ch.dmAsServer(part, "Usage: ~" + cmd.name + " " + cmd.usage);
