@@ -1,4 +1,4 @@
-import User, { Tag } from "./User"; // TODO: add sitebanning
+import User, { Tag } from "./User";
 interface Rank {
   priority: number;
   permissions: string[];
@@ -9,6 +9,9 @@ export let validPermissions = [
   "rooms.seeInvisibleRooms",
   "rooms.chownAnywhere",
   "vanish",
+  "siteban",
+  "siteban.anyReason",
+  "siteban.anyDuration",
   "antibot.bypass",
   "rooms.chsetAnywhere",
   "*",
@@ -88,6 +91,9 @@ export const rankDefinitions: Record<string, Rank> = {
       "rooms.antiKickban",
       "vanish",
       "rooms.seeInvisibleRooms",
+      "siteban",
+      "siteban.anyReason",
+      "siteban.anyDuration"
     ],
     tag: {
       text: "MOD",
