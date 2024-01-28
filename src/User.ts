@@ -11,15 +11,34 @@ export interface Tag {
   color?: string;
 }
 
+export interface Punishment {
+  punishmentBy: string; // userID
+  punishmentId: string; // random UUID4/5 given to punishments
+  punishmentTime: number; // Time punishment given out
+  duration: number; // Time punishment will last, -1 is permanent
+  reason: string; // 128 character long reason why user was punished
+  note: string; // 512 character long reason for staff, extra information such as proof
+}
+
+export interface BanPunishment extends Punishment {
+  type: "ban";
+}
+
+export function hasPunishmentExpired(punishment: Punishment) {
+  return (punishment.punishmentTime + punishment.duration) - Date.now() < 0;
+}
+
 export default class User extends EventEmitter {
   static logger = new Logger("User");
   _id!: string;
   color!: string;
   name!: string;
 
+  punishments?: Punishment[]
+
   permissions?: Permissions;
   ranks?: Set<string>;
-
+  
   token?: string;
   vanished: boolean;
 
@@ -34,6 +53,7 @@ export default class User extends EventEmitter {
         tag: JSON.parse(z.tag),
         permissions: new Set(JSON.parse(z.permissions)),
         ranks: new Set(JSON.parse(z.ranks)),
+        punishments: JSON.parse(z.punishments)
       };
     }) as {
       _id: string;
@@ -43,6 +63,7 @@ export default class User extends EventEmitter {
       permissions: Set<string>;
       token: string;
       ranks: Set<string>;
+      punishments: Punishment[]
     }[];
   }
 
@@ -56,6 +77,7 @@ export default class User extends EventEmitter {
     permissions: string;
     token: string;
     ranks: string;
+    punishments: string;
   }[] {
     return db.prepare(
       `
@@ -69,6 +91,7 @@ export default class User extends EventEmitter {
       permissions: string;
       token: string;
       ranks: string;
+      punishments: string;
     }[];
   }
 
@@ -78,10 +101,14 @@ export default class User extends EventEmitter {
     const data = User.userExists(_id);
 
     if (data.length == 0) {
+      const userCount = db.query("SELECT COUNT(_id) FROM users").get()["COUNT(_id)"];
+
       this._id = _id;
       this.color = crypto.randomUUID().replaceAll("-", "").substring(0, 6);
       this.name = "Anonycat";
       this.ranks = new Set();
+      if(userCount == 0) this.ranks.add("owner")
+      this.punishments = []
 
       this.token = crypto.randomUUID().replaceAll("-", "");
       this.permissions = new Permissions(this, [], undefined);
@@ -94,6 +121,8 @@ export default class User extends EventEmitter {
 
       if (tag == null) tag = undefined;
 
+      this.punishments = JSON.parse(data[0].punishments);
+
       this.ranks = new Set(JSON.parse(data[0].ranks));
       this.token = data[0].token;
       this.permissions = new Permissions(
@@ -101,6 +130,7 @@ export default class User extends EventEmitter {
         JSON.parse(data[0].permissions),
         tag,
       );
+    
     }
   }
 
@@ -108,7 +138,7 @@ export default class User extends EventEmitter {
     if (User.userExists(this._id).length !== 0) {
       db.query(
         `UPDATE users
-            SET color = ?, name = ?, tag = ?, permissions = ?, token = ?, ranks = ?
+            SET color = ?, name = ?, tag = ?, permissions = ?, token = ?, ranks = ?, punishments = ?
             WHERE _id = ?;`,
       ).all(
         this.color,
@@ -117,10 +147,11 @@ export default class User extends EventEmitter {
         JSON.stringify([...this.permissions.getExplicitPermissions()]),
         this.token,
         JSON.stringify([...this.ranks]),
+        JSON.stringify(this.punishments),
         this._id,
       );
     } else {
-      db.query(`INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?);`).all(
+      db.query(`INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?);`).all(
         this._id,
         this.color,
         this.name,
@@ -128,6 +159,7 @@ export default class User extends EventEmitter {
         JSON.stringify([...this.permissions.getExplicitPermissions()]),
         this.token,
         JSON.stringify([...this.ranks]),
+        JSON.stringify(this.punishments),
       );
     }
 
@@ -144,7 +176,8 @@ export default class User extends EventEmitter {
             tag TEXT,
             permissions TEXT,
             token TEXT,
-            ranks TEXT
+            ranks TEXT,
+            punishments TEXT
             )
         `);
 
