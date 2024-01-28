@@ -90,21 +90,24 @@ interface MessageUserset {
     color: string;
   }
 }
-interface CustomTargetSubscribed {
-  mode: "subscribed"
+interface CustomTarget {
   global?: boolean
 }
-interface CustomTargetId {
+interface CustomTargetSubscribed extends CustomTarget {
+  mode: "subscribed"
+}
+interface CustomTargetId extends CustomTarget{
   mode: "id"
   id: string
-  global?: boolean
-
 }
-type CustomTarget = CustomTargetSubscribed | CustomTargetId
+interface CustomTargetIds extends CustomTarget {
+  mode: "ids"
+  ids: string[]
+}
 interface MessageCustom {
   m: "custom"
   data: any
-  target: CustomTarget
+  target: CustomTargetSubscribed | CustomTargetId | CustomTargetIds
 }
 export type Message =
   | MessageHi

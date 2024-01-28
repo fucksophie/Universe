@@ -3,8 +3,6 @@
     "lib": ["ESNext"],
     "module": "ESNext",
     "target": "ESNext",
-    "moduleResolution": "Node",
-    // "bun-types" is the important part
-    "types": ["bun-types"]
+    "moduleResolution": "Node"
   }
 }

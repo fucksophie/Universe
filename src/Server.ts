@@ -588,8 +588,7 @@ export default class Server {
         if (!data.data) return;
         if (typeof data.target !== "object") return;
         if (!data.target.mode) return;
-        let global;
-        Boolean;
+        let global: boolean;
         if (!data.target.global) global = false;
         else global = true;
 
@@ -615,23 +614,24 @@ export default class Server {
         } else if (data.target.mode == "id") {
           if (!data.target.id) return;
           if (typeof data.target.id !== "string") return;
-          if (!global) {
+          const id = data.target.id;
+          if (global) {
             let part = ch.participants.get(data.target.id);
 
             if (!part) {
               part = [...ch.participants].find((z) =>
-                z[1].pID == data.target.id
+                z[1].pID == id
               )?.[1];
             }
             if (!part) return;
             part.clients.forEach((z) => z.sendArray(param));
           } else {
             Server.channels.forEach((z) => {
-              let part = z.participants.get(data.target.id);
+              let part = z.participants.get(id);
 
               if (!part) {
                 part = [...z.participants].find((z) =>
-                  z[1].pID == data.target.id
+                  z[1].pID == id
                 )?.[1];
               }
               if (!part) return;
