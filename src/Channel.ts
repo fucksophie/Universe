@@ -4,6 +4,7 @@ import { Logger } from "./Logger";
 import Participiant from "./Participiant";
 import Server from "./Server";
 import User from "./User";
+import { ChannelSettings } from "./MessageTypes";
 
 function formatTime(t: number): string {
   let year: number,
@@ -34,17 +35,6 @@ function formatTime(t: number): string {
   return timeS;
 }
 
-export interface ChannelSettings {
-  chat?: boolean;
-  color?: string;
-  color2?: string;
-  visible?: boolean;
-  limit?: number;
-  crownsolo?: boolean;
-  "no cussing"?: boolean;
-  minOnlineTime?: number;
-  lobby: boolean;
-}
 
 interface Crown {
   endPos: {

@@ -1,9 +1,25 @@
-import { ChannelSettings } from "./Channel";
 
+export interface ChannelSettings {
+  chat?: boolean;
+  /**
+   * @pattern ^#(?:[0-9a-fA-F]{3}){1,2}$
+   */
+  color?: string;
+  /**
+   * @pattern ^#(?:[0-9a-fA-F]{3}){1,2}$
+   */
+  color2?: string;
+  visible?: boolean;
+  limit?: number;
+  crownsolo?: boolean;
+  "no cussing"?: boolean;
+  minOnlineTime?: number;
+  lobby: boolean;
+}
 interface MessageHi {
   m: "hi";
-  token: string;
-  login: {
+  token?: string;
+  login?: {
     type: string;
     code: string;
   };
@@ -14,8 +30,11 @@ interface MessageVanish {
 }
 interface MessageChannel {
   m: "ch";
+  /**
+   * @maximum 50
+   */
   _id: string;
-  set: ChannelSettings;
+  set?: ChannelSettings;
 }
 interface MessageChannelSet {
   m: "chset";
@@ -30,35 +49,47 @@ interface MessageBye {
 }
 interface MessageMouse {
   m: "m";
-  x: number | string;
-  y: number | string;
+  x: number;
+  y: number;
 }
 interface MessageSetName {
   m: "setname";
   _id: string;
+  /**
+   * @maximum 250
+   */
   name: string;
 }
 interface MessageSetColor {
   m: "setcolor";
   _id: string;
+  /**
+   * @pattern ^#(?:[0-9a-fA-F]{3}){1,2}$
+   */
   color: string;
 }
 interface MessageKickBan {
   m: "kickban";
   _id: string;
-  ms: number;
+  ms?: number;
 }
 interface MessageClearChat {
   m: "clearchat";
 }
 interface MessageDM {
   m: "dm";
+  /**
+   * @maximum 512
+   */
   message: string;
   _id: string;
   reply_to?: string;
 }
 interface MessageA {
   m: "a";
+  /**
+   * @maximum 512
+   */
   message: string;
   reply_to?: string;
 }

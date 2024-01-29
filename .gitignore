@@ -1,3 +1,4 @@
 hash.txt
 users.db
 node_modules
+src/MessageTypesSchema.ts

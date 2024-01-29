@@ -2,7 +2,12 @@
   "dependencies": {
     "@types/bun": "^1.0.4",
     "chalk": "^5.3.0",
-    "javascript-obfuscator": "^4.1.0"
+    "javascript-obfuscator": "^4.1.0",
+    "zod": "^3.22.4"
+  },
+  "scripts": {
+    "start": "bun index.ts",
+    "zod": "bunx ts-to-zod src/MessageTypes.ts src/MessageTypesSchema.ts"
   },
   "type": "module"
 }

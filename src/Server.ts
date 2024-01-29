@@ -8,6 +8,7 @@
   Standing in the rain, I put silver in my chain
   Snow landscapes, I see ice everywhere I go
 */
+import { z } from "zod";
 
 import { Logger } from "./Logger";
 import Channel, { ChannelConfiguration, getDefaultConfig } from "./Channel";
@@ -119,7 +120,6 @@ export function verifyColor(color = ""): boolean {
   if (!color) return false;
   return /^#(?:[0-9a-fA-F]{3}){1,2}$/gm.test(color);
 }
-
 function verifyNumber(number: string|number = ""): boolean {
   if (typeof number == "number") return true;
   if (!number) return false;
@@ -162,6 +162,7 @@ function validateSet(
 
 import parseCommand from "./Commands";
 import { Message } from "./MessageTypes";
+import { messageSchema } from "./MessageTypesSchema";
 
 export default class Server {
   static logger = new Logger("Server");
@@ -191,8 +192,8 @@ export default class Server {
 
   static async requestHandler(ws: UniverseWS, raw: string | Uint8Array) {
     if (raw instanceof Uint8Array) return;
-
-    let hh: Message[];
+    
+    let hh: any[];
     try {
       hh = JSON.parse(raw);
     } catch {
@@ -201,7 +202,10 @@ export default class Server {
 
     if (!Array.isArray(hh)) return;
 
-    hh.forEach((data) => {
+    hh.forEach((rawData) => {
+      const parsed = messageSchema.safeParse(rawData);
+      if(!parsed.success) return;
+      const data = parsed.data as Message;
       if (ws.antibot.verifyMessage(ws, data)) {
         ws.client.notify(
           "Antibot!",
@@ -264,8 +268,6 @@ export default class Server {
         let part = ch.participants.get(ws.client._id);
         if (!part) return;
 
-        if (typeof data.vanish != "boolean") return;
-
         if (!part.user.vanished && data.vanish) {
           ch.broadcastToChannel({
             m: "bye",
@@ -278,10 +280,6 @@ export default class Server {
       }
       if (data.m == "ch") {
         if (!ws.client) return;
-
-        if (!data._id) return;
-        if (typeof data._id !== "string") return;
-        if (data._id.length > 50) return;
 
         let set = validateSet(data.set);
 
@@ -389,8 +387,6 @@ export default class Server {
       }
 
       if (data.m == "m") {
-        if (!verifyNumber(data?.x) || !verifyNumber(data?.y)) return;
-
         if (ws.client.channel) {
           let part = ws.client.channel.participants.get(ws.client._id);
           if (!part) return;
@@ -401,37 +397,27 @@ export default class Server {
       }
 
       if (data.m == "setname") {
-        if (!data._id) return;
-        if (!data.name) return;
-
         const ch = ws.client.channel;
         const part = ch.participants.get(ws.client._id);
         if (!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
         let otherUser = ch.participants.get(data._id);
         if (!otherUser) return;
-        if (data.name.length > 250) return;
         if (data.name.trim().length == 0) return;
         otherUser.user.name = data.name;
         otherUser.user.commit();
       }
 
       if (data.m == "setcolor") {
-        if (!data._id) return;
-        if (!data.color) return;
-
         const ch = ws.client.channel;
         const part = ch.participants.get(ws.client._id);
         if (!part.user.permissions.hasPermission("rooms.usersetOthers")) return;
         let otherUser = ch.participants.get(data._id);
         if (!otherUser) return;
-        if (!verifyColor(data.color)) return;
         otherUser.user.color = data.color.substring(1);
         otherUser.user.commit();
       }
 
       if (data.m == "kickban") {
-        if (!data._id) return;
-
         const ch = ws.client.channel;
         const part = ch.participants.get(ws.client._id);
 
@@ -447,7 +433,7 @@ export default class Server {
         let ms = 3600000;
 
         if (data.ms) {
-          if (verifyNumber(data.ms)) ms = data.ms;
+          ms = data.ms;
         }
 
         if (!part.user.permissions.hasPermission("rooms.chownAnywhere")) {
@@ -472,10 +458,6 @@ export default class Server {
       if (data.m == "dm") {
         const ch = ws.client.channel;
         if (!ch) return;
-        if (!data.message) return;
-        if (!data._id) return;
-        if (typeof data.message !== "string") return;
-        if (data.message.length > 512) return;
 
         let otherUser = ch.participants.get(data._id);
         if (!otherUser) return;
@@ -488,9 +470,6 @@ export default class Server {
       if (data.m == "a") {
         const ch = ws.client.channel;
         if (!ch) return;
-        if (!data.message) return;
-        if (typeof data.message !== "string") return;
-        if (data.message.length > 512) return;
 
         let part = ch.participants.get(ws.client._id);
         if (!part.quotas.chat.isAvailable()) return;
@@ -542,8 +521,6 @@ export default class Server {
       }
 
       if (data.m == "t") {
-        if (!verifyNumber(data.e)) return;
-
         ws.client.sendArray({
           m: "t",
           t: Date.now(),
