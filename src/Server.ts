@@ -204,7 +204,10 @@ export default class Server {
 
     hh.forEach((rawData) => {
       const parsed = messageSchema.safeParse(rawData);
-      if(!parsed.success) return;
+      if(!parsed.success) {
+        //console.log(parsed.error.errors[0].unionErrors.filter(z => !z.issues.find(g=>g.code=="invalid_literal")))
+        return;
+      }
       const data = parsed.data as Message;
       if (ws.antibot.verifyMessage(ws, data)) {
         ws.client.notify(

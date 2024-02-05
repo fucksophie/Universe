@@ -14,7 +14,7 @@ export interface ChannelSettings {
   crownsolo?: boolean;
   "no cussing"?: boolean;
   minOnlineTime?: number;
-  lobby: boolean;
+  lobby?: boolean;
 }
 interface MessageHi {
   m: "hi";
@@ -47,7 +47,7 @@ interface MessageChannelSet {
 }
 interface MessageChangeOwner {
   m: "chown";
-  id: string;
+  id?: string;
 }
 interface MessageBye {
   m: "bye";
@@ -100,8 +100,8 @@ interface MessageA {
 }
 interface MessageNotes {
   m: "n";
-  t: number;
-  n: { n: string; d?: number; s?: number; v: number }[];
+  t?: number;
+  n: { n: string; d?: number; s?: number; v?: number }[];
 }
 interface MessageTime {
   m: "t"
