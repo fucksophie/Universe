@@ -19,10 +19,15 @@ export interface ChannelSettings {
 interface MessageHi {
   m: "hi";
   token?: string;
+  code?: any;
   login?: {
     type: string;
     code: string;
   };
+}
+interface MessageDevices {
+  m: "devices"
+  list: any[]
 }
 interface MessageVanish {
   m: "v";
@@ -161,4 +166,5 @@ export type Message =
   | MessageSubcribeCustom
   | MessageUnsubscribeCustom
   | MessageUserset
-  | MessageCustom;
+  | MessageCustom
+  | MessageDevices;
