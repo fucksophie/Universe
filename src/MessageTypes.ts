@@ -27,7 +27,7 @@ interface MessageHi {
 }
 interface MessageDevices {
   m: "devices"
-  list: any[]
+  list?: any[]
 }
 interface MessageVanish {
   m: "v";
